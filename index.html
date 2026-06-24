@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Deal Product Details Finder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<style>
+:root {
+  --black: #0D0D0D;
+  --off-white: #F7F5F2;
+  --gold: #C49A3C;
+  --gold-light: #E8C96A;
+  --red: #C0392B;
+  --mid: #888;
+  --border: #E8E4DE;
+  --card-bg: #fff;
+  --surface: #F2EFE9;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  background: var(--off-white);
+  color: var(--black);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  display: flex; flex-direction: column;
+  height: 100%; overflow: hidden;
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--black);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+  z-index: 200;
+}
+.header-back {
+  background: none; border: none;
+  color: var(--gold); font-size: 22px;
+  cursor: pointer; padding: 4px 8px 4px 0;
+  display: none; align-items: center;
+}
+.header-back.visible { display: flex; }
+.app-title {
+  flex: 1;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #fff; line-height: 1.3;
+}
+.app-title span { color: var(--gold); display: block; font-size: 9px; letter-spacing: 3px; }
+.header-count {
+  background: var(--gold);
+  color: var(--black);
+  font-size: 10px; font-weight: 800;
+  padding: 3px 8px; border-radius: 20px;
+  display: none;
+}
+.header-count.visible { display: block; }
+
+/* ── PAGES ── */
+.page { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.page.active { display: flex; }
+
+/* ══════════════════════════════════
+   PAGE: HOME (input + controls)
+══════════════════════════════════ */
+.home-scroll { flex: 1; overflow-y: auto; }
+
+/* MODE TABS */
+.mode-tabs {
+  display: flex;
+  background: var(--black);
+  padding: 0 16px 16px;
+  gap: 8px;
+}
+.tab-btn {
+  flex: 1; padding: 9px 6px;
+  background: #1a1a1a; border: 1.5px solid #333;
+  color: var(--mid); font-size: 10px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  border-radius: 4px; cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn.active {
+  background: var(--gold); color: var(--black);
+  border-color: var(--gold);
+}
+
+/* PANELS */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── SCAN PANEL ── */
+.scan-panel { background: var(--black); }
+.camera-wrap {
+  position: relative;
+  background: #000;
+  width: 100%;
+  overflow: hidden;
+}
+#qr-reader { width: 100%; }
+#qr-reader video { width: 100% !important; display: block; }
+#qr-reader img { display: none !important; }
+#qr-reader__dashboard_section_swaplink { display: none !important; }
+#qr-reader__status_span { display: none !important; }
+#qr-reader__camera_selection { 
+  color: var(--gold); background: #111; border: 1px solid #333;
+  padding: 6px; border-radius: 4px; font-size: 12px; margin: 8px;
+  display: block; width: calc(100% - 16px);
+}
+
+.scan-viewfinder {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+}
+.vf-frame {
+  width: 75%; max-width: 300px; height: 180px;
+  position: relative;
+}
+.vf-frame::before, .vf-frame::after,
+.vf-frame span::before, .vf-frame span::after {
+  content: ''; position: absolute;
+  width: 24px; height: 24px;
+  border-color: var(--gold); border-style: solid;
+}
+.vf-frame::before { top:0; left:0; border-width: 3px 0 0 3px; }
+.vf-frame::after  { top:0; right:0; border-width: 3px 3px 0 0; }
+.vf-frame span::before { bottom:0; left:0; border-width: 0 0 3px 3px; }
+.vf-frame span::after  { bottom:0; right:0; border-width: 0 3px 3px 0; }
+.vf-hint {
+  position: absolute; bottom: -28px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 1px; color: rgba(255,255,255,0.5);
+  white-space: nowrap; text-transform: uppercase;
+}
+.scan-line {
+  position: absolute; left: 5%; right: 5%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: scanAnim 2s linear infinite;
+}
+@keyframes scanAnim { 0%{top:10%} 50%{top:85%} 100%{top:10%} }
+
+.scan-actions {
+  display: flex; gap: 8px; padding: 12px 16px;
+  background: var(--black);
+}
+.btn-cam {
+  flex: 1; padding: 12px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  border-radius: 4px; border: none; cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-start { background: var(--gold); color: var(--black); }
+.btn-stop  { background: var(--red); color: #fff; }
+.btn-capture { background: #1a1a1a; border: 1.5px solid #444; color: #fff; }
+.btn-capture:active { border-color: var(--gold); }
+
+/* ── OCR SELECTION ── */
+.ocr-overlay {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 20; cursor: crosshair;
+  background: rgba(0,0,0,0.3);
+}
+.ocr-select-box {
+  position: absolute;
+  border: 2px solid var(--gold);
+  background: rgba(196,154,60,0.1);
+  pointer-events: none;
+}
+.ocr-hint-banner {
+  position: absolute; top: 10px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  color: var(--gold); font-size: 11px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 20px;
+  white-space: nowrap; pointer-events: none;
+}
+.ocr-progress {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8); color: #fff;
+  font-size: 11px; padding: 6px 14px; border-radius: 20px;
+  display: none;
+}
+
+/* ── TEXT / MULTI PANEL ── */
+.text-panel { padding: 16px; background: var(--off-white); }
+.input-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid); margin-bottom: 8px;
+}
+.barcode-textarea {
+  width: 100%; min-height: 100px;
+  background: #fff; border: 1.5px solid var(--border);
+  color: var(--black); padding: 12px;
+  font-size: 16px; font-family: 'SF Mono', monospace;
+  border-radius: 6px; outline: none; resize: none;
+  line-height: 1.8; letter-spacing: 0.5px;
+  transition: border-color 0.2s;
+}
+.barcode-textarea:focus { border-color: var(--gold); }
+.input-hint {
+  font-size: 11px; color: var(--mid); margin-top: 6px; line-height: 1.5;
+}
+.btn-lookup-all {
+  width: 100%; margin-top: 14px;
+  padding: 14px; background: var(--black);
+  color: #fff; font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  border: none; border-radius: 6px; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-lookup-all:active { background: #333; }
+
+/* RECENT */
+.recent-wrap { padding: 16px; }
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--mid); margin-bottom: 10px;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; font-family: 'SF Mono', monospace;
+  cursor: pointer; transition: all 0.15s; color: var(--black);
+}
+.chip:active { border-color: var(--gold); color: var(--gold); }
+
+/* ADDED BARCODES LIST (multi scan accumulator) */
+.added-wrap { padding: 0 16px 16px; }
+.added-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.added-item {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px;
+}
+.added-code { flex: 1; font-family: 'SF Mono', monospace; font-size: 13px; }
+.added-remove {
+  background: none; border: none; color: var(--mid);
+  font-size: 18px; cursor: pointer; padding: 0 4px;
+  line-height: 1;
+}
+.added-remove:active { color: var(--red); }
+
+/* ══════════════════════════════════
+   PAGE: RESULTS (product list)
+══════════════════════════════════ */
+.results-page { background: var(--off-white); }
+.results-scroll { flex: 1; overflow-y: auto; padding: 16px; }
+.results-grid { display: flex; flex-direction: column; gap: 14px; }
+
+.product-list-card {
+  background: #fff; border-radius: 10px;
+  overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  display: flex; cursor: pointer; transition: box-shadow 0.2s;
+  border: 1.5px solid transparent;
+  animation: fadeIn 0.3s ease;
+}
+.product-list-card:active { box-shadow: 0 4px 20px rgba(0,0,0,0.12); border-color: var(--gold); }
+.plc-thumb {
+  width: 90px; min-height: 90px;
+  background: #f5f5f5; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.plc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.plc-info { flex: 1; padding: 12px; min-width: 0; }
+.plc-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; margin-bottom: 3px; }
+.plc-name { font-size: 14px; font-weight: 600; line-height: 1.3; margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plc-prices { display: flex; align-items: baseline; gap: 8px; }
+.plc-sale { font-size: 16px; font-weight: 800; }
+.plc-orig { font-size: 12px; color: var(--mid); text-decoration: line-through; }
+.plc-badge {
+  margin-top: 6px; display: inline-block;
+  background: var(--red); color: #fff;
+  font-size: 9px; font-weight: 800;
+  letter-spacing: 1px; padding: 2px 7px; border-radius: 3px;
+}
+.plc-notfound { font-size: 12px; color: var(--mid); font-style: italic; }
+.plc-chevron { padding: 12px 10px 12px 0; display: flex; align-items: center; color: var(--mid); font-size: 18px; }
+
+/* loading card */
+.plc-loading { opacity: 0.5; pointer-events: none; }
+.plc-loading .plc-name { color: var(--mid); font-style: italic; }
+
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══════════════════════════════════
+   PAGE: PRODUCT DETAIL
+══════════════════════════════════ */
+.detail-page { background: #fff; }
+.detail-scroll { flex: 1; overflow-y: auto; }
+
+/* IMAGE CAROUSEL */
+.carousel {
+  position: relative; background: #f5f5f5;
+  overflow: hidden;
+}
+.carousel-track {
+  display: flex; transition: transform 0.3s ease;
+}
+.carousel-slide {
+  min-width: 100%; min-height: 320px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.carousel-slide img {
+  width: 100%; max-height: 420px;
+  object-fit: contain; display: block;
+}
+.carousel-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(0,0,0,0.45); color: #fff;
+  border: none; width: 36px; height: 36px;
+  border-radius: 50%; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: 10;
+  transition: background 0.15s;
+}
+.carousel-arrow:active { background: rgba(0,0,0,0.7); }
+.carousel-prev { left: 10px; }
+.carousel-next { right: 10px; }
+.carousel-dots {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,0.5); cursor: pointer;
+  transition: background 0.2s;
+}
+.dot.active { background: var(--gold); }
+.carousel-counter {
+  position: absolute; top: 10px; right: 12px;
+  background: rgba(0,0,0,0.5); color: #fff;
+  font-size: 11px; padding: 3px 9px; border-radius: 20px;
+}
+.discount-chip {
+  position: absolute; top: 10px; left: 12px;
+  background: var(--red); color: #fff;
+  font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  padding: 4px 10px; border-radius: 4px;
+}
+
+/* DETAIL INFO */
+.detail-info { padding: 20px; }
+.detail-brand { font-size: 10px; font-weight: 700; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+.detail-name { font-size: 20px; font-weight: 700; line-height: 1.3; margin-bottom: 16px; }
+.detail-prices { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.detail-sale { font-size: 28px; font-weight: 800; }
+.detail-curr { font-size: 14px; color: var(--mid); margin-left: 3px; }
+.detail-orig { font-size: 17px; color: var(--mid); text-decoration: line-through; }
+.detail-savings {
+  font-size: 12px; color: var(--red); font-weight: 700;
+  margin-bottom: 16px; letter-spacing: 0.5px;
+}
+.detail-sku {
+  font-size: 11px; font-family: 'SF Mono', monospace;
+  color: var(--mid); letter-spacing: 1px; margin-bottom: 16px;
+}
+.detail-desc-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid); margin-bottom: 8px;
+}
+.detail-desc {
+  font-size: 14px; line-height: 1.8; color: #444;
+  margin-bottom: 24px;
+}
+.btn-open-site {
+  display: block; width: 100%;
+  background: var(--black); color: #fff;
+  padding: 15px; text-align: center;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  text-decoration: none; border-radius: 6px;
+  margin-bottom: 16px;
+}
+.btn-open-site:active { background: #333; }
+
+/* ── STATES ── */
+.state-loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 200px; gap: 14px;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--mid); }
+
+.not-found-card {
+  background: #fff; border-radius: 10px;
+  padding: 24px 20px; text-align: center;
+  border: 1.5px dashed var(--border);
+}
+.nf-icon { font-size: 36px; margin-bottom: 12px; }
+.nf-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--mid); margin-bottom: 6px; }
+.nf-msg { font-size: 13px; color: var(--mid); line-height: 1.5; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--black); color: #fff;
+  padding: 10px 20px; border-radius: 20px;
+  font-size: 12px; letter-spacing: 1px;
+  z-index: 999; transition: transform 0.3s ease;
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <button class="header-back" id="headerBack" onclick="goBack()">←</button>
+  <div class="app-title">
+    The Deal Product Details Finder
+    <span>thedealoutlet.com</span>
+  </div>
+  <div class="header-count" id="headerCount">0</div>
+</div>
+
+<!-- ════ PAGE: HOME ════ -->
+<div class="page active" id="pageHome">
+  <div class="home-scroll">
+
+    <!-- MODE TABS -->
+    <div class="mode-tabs">
+      <button class="tab-btn active" onclick="switchTab('scan')">📷 Camera</button>
+      <button class="tab-btn" onclick="switchTab('text')">🔢 Type</button>
+      <button class="tab-btn" onclick="switchTab('multi')">📦 Multi</button>
+    </div>
+
+    <!-- SCAN PANEL -->
+    <div class="panel active scan-panel" id="panelScan">
+      <div class="camera-wrap" id="cameraWrap" style="display:none;">
+        <div id="qr-reader"></div>
+        <div class="scan-viewfinder" id="scanViewfinder">
+          <div class="vf-frame">
+            <span></span>
+            <div class="scan-line"></div>
+            <div class="vf-hint">Point at barcode or numbers</div>
+          </div>
+        </div>
+        <!-- OCR overlay (hidden by default) -->
+        <div class="ocr-overlay" id="ocrOverlay" style="display:none;"
+          onmousedown="startOcrDrag(event)" ontouchstart="startOcrDrag(event)">
+          <div class="ocr-hint-banner">Drag to select numbers on screen</div>
+          <div class="ocr-select-box" id="ocrBox"></div>
+          <div class="ocr-progress" id="ocrProgress">Reading text…</div>
+        </div>
+      </div>
+
+      <div class="scan-actions">
+        <button class="btn-cam btn-start" id="btnStartCam" onclick="startCamera()">▶ Start Camera</button>
+        <button class="btn-cam btn-stop" id="btnStopCam" onclick="stopCamera()" style="display:none;">⏹ Stop</button>
+        <button class="btn-cam btn-capture" id="btnOCR" onclick="toggleOCR()" style="display:none;" title="Drag to select text area">🔍 Select Text</button>
+      </div>
+    </div>
+
+    <!-- TYPE PANEL -->
+    <div class="panel" id="panelText">
+      <div class="text-panel">
+        <div class="input-label">Barcode / Product Code</div>
+        <input type="tel" id="singleInput" inputmode="numeric"
+          style="width:100%;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:6px;font-size:16px;font-family:'SF Mono',monospace;letter-spacing:1px;outline:none;transition:border-color 0.2s;"
+          placeholder="e.g. 104227337532"
+          onfocus="this.style.borderColor='var(--gold)'"
+          onblur="this.style.borderColor='var(--border)'"
+          onkeydown="if(event.key==='Enter')lookupSingle()">
+        <button class="btn-lookup-all" onclick="lookupSingle()">🔍 Find Product</button>
+      </div>
+    </div>
+
+    <!-- MULTI PANEL -->
+    <div class="panel" id="panelMulti">
+      <div class="text-panel">
+        <div class="input-label">Enter Multiple Barcodes</div>
+        <textarea class="barcode-textarea" id="multiInput"
+          placeholder="One per line, or comma separated:&#10;104227337532&#10;104227337533&#10;104227337534"></textarea>
+        <div class="input-hint">Enter one barcode per line or separate with commas. You can also scan using camera — each scanned code is added to the list below.</div>
+        <button class="btn-lookup-all" onclick="lookupMulti()">🔍 Find All Products</button>
+      </div>
+
+      <!-- Scanned accumulator -->
+      <div class="added-wrap" id="addedWrap" style="display:none;">
+        <div class="section-label">Scanned / Added Codes</div>
+        <div class="added-list" id="addedList"></div>
+      </div>
+    </div>
+
+    <!-- RECENT -->
+    <div class="recent-wrap" id="recentWrap" style="display:none;">
+      <div class="section-label">Recent Scans</div>
+      <div class="chips" id="recentChips"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PAGE: RESULTS ════ -->
+<div class="page" id="pageResults">
+  <div class="results-scroll">
+    <div class="results-grid" id="resultsGrid"></div>
+  </div>
+</div>
+
+<!-- ════ PAGE: DETAIL ════ -->
+<div class="page" id="pageDetail">
+  <div class="detail-scroll">
+    <!-- Carousel -->
+    <div class="carousel" id="detailCarousel">
+      <div class="carousel-track" id="carouselTrack"></div>
+      <button class="carousel-arrow carousel-prev" id="carouselPrev" onclick="carouselMove(-1)">‹</button>
+      <button class="carousel-arrow carousel-next" id="carouselNext" onclick="carouselMove(1)">›</button>
+      <div class="carousel-dots" id="carouselDots"></div>
+      <div class="carousel-counter" id="carouselCounter"></div>
+      <div class="discount-chip" id="detailDiscount" style="display:none;"></div>
+    </div>
+    <div class="detail-info" id="detailInfo"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════
+// STATE
+// ═══════════════════════════════
+let currentTab = 'scan';
+let html5QrCode = null;
+let cameraRunning = false;
+let ocrMode = false;
+let multiScannedCodes = [];
+let products = []; // fetched product data array
+let currentCarouselIdx = 0;
+let carouselImages = [];
+let pageStack = []; // for back navigation
+let recent = JSON.parse(localStorage.getItem('tdo_recent_v2') || '[]');
+
+// OCR drag state
+let ocrDragActive = false;
+let ocrDragStart = {x:0, y:0};
+
+// ═══════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  const isHome = id === 'pageHome';
+  const isDetail = id === 'pageDetail';
+  const isResults = id === 'pageResults';
+
+  document.getElementById('headerBack').classList.toggle('visible', !isHome);
+  document.getElementById('headerCount').classList.toggle('visible', isResults && products.length > 1);
+  if (isResults) document.getElementById('headerCount').textContent = products.length;
+}
+
+function goBack() {
+  if (pageStack.length > 0) {
+    pageStack.pop();
+    const prev = pageStack[pageStack.length - 1] || 'pageHome';
+    if (prev === 'pageHome') pageStack = [];
+    showPage(prev);
+  } else {
+    showPage('pageHome');
+  }
+}
+
+function navigateTo(id) {
+  pageStack.push(id);
+  showPage(id);
+}
+
+// ═══════════════════════════════
+// TABS
+// ═══════════════════════════════
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['scan','text','multi'][i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const map = {scan:'panelScan', text:'panelText', multi:'panelMulti'};
+  document.getElementById(map[tab]).classList.add('active');
+
+  // Stop camera if switching away from scan
+  if (tab !== 'scan' && cameraRunning) stopCamera();
+}
+
+// ═══════════════════════════════
+// CAMERA
+// ═══════════════════════════════
+function startCamera() {
+  document.getElementById('cameraWrap').style.display = 'block';
+  document.getElementById('btnStartCam').style.display = 'none';
+  document.getElementById('btnStopCam').style.display = 'flex';
+  document.getElementById('btnOCR').style.display = 'flex';
+
+  html5QrCode = new Html5Qrcode("qr-reader");
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 15, qrbox: { width: 280, height: 160 }, aspectRatio: 1.5 },
+    (decoded) => {
+      const code = extractCode(decoded);
+      if (!code) return;
+      handleScannedCode(code);
+    },
+    () => {}
+  ).then(() => {
+    cameraRunning = true;
+  }).catch(err => {
+    showToast('Camera access denied — use HTTPS');
+    stopCamera();
+  });
+}
+
+function stopCamera() {
+  if (html5QrCode) {
+    html5QrCode.stop().catch(()=>{});
+    html5QrCode = null;
+  }
+  cameraRunning = false;
+  ocrMode = false;
+  document.getElementById('cameraWrap').style.display = 'none';
+  document.getElementById('btnStartCam').style.display = 'flex';
+  document.getElementById('btnStopCam').style.display = 'none';
+  document.getElementById('btnOCR').style.display = 'none';
+  document.getElementById('ocrOverlay').style.display = 'none';
+}
+
+function handleScannedCode(code) {
+  if (currentTab === 'multi') {
+    addToMulti(code);
+    showToast('Added: ' + code);
+  } else {
+    // Single scan — go straight to lookup
+    stopCamera();
+    lookupCodes([code]);
+  }
+}
+
+// ═══════════════════════════════
+// OCR — SELECT REGION
+// ═══════════════════════════════
+function toggleOCR() {
+  ocrMode = !ocrMode;
+  const overlay = document.getElementById('ocrOverlay');
+  const scanVF = document.getElementById('scanViewfinder');
+  overlay.style.display = ocrMode ? 'block' : 'none';
+  scanVF.style.display = ocrMode ? 'none' : 'flex';
+  document.getElementById('btnOCR').textContent = ocrMode ? '❌ Cancel' : '🔍 Select Text';
+}
+
+function getEventPos(e, el) {
+  const rect = el.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: src.clientX - rect.left, y: src.clientY - rect.top };
+}
+
+function startOcrDrag(e) {
+  e.preventDefault();
+  const overlay = document.getElementById('ocrOverlay');
+  ocrDragStart = getEventPos(e, overlay);
+  ocrDragActive = true;
+  document.getElementById('ocrBox').style.cssText = `left:${ocrDragStart.x}px;top:${ocrDragStart.y}px;width:0;height:0;`;
+
+  const moveHandler = (ev) => {
+    if (!ocrDragActive) return;
+    ev.preventDefault();
+    const pos = getEventPos(ev, overlay);
+    const x = Math.min(ocrDragStart.x, pos.x);
+    const y = Math.min(ocrDragStart.y, pos.y);
+    const w = Math.abs(pos.x - ocrDragStart.x);
+    const h = Math.abs(pos.y - ocrDragStart.y);
+    document.getElementById('ocrBox').style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;`;
+  };
+
+  const endHandler = async (ev) => {
+    if (!ocrDragActive) return;
+    ocrDragActive = false;
+    document.removeEventListener('mousemove', moveHandler);
+    document.removeEventListener('touchmove', moveHandler);
+    document.removeEventListener('mouseup', endHandler);
+    document.removeEventListener('touchend', endHandler);
+
+    // Capture the current video frame + selected region
+    await captureOCRRegion();
+  };
+
+  document.addEventListener('mousemove', moveHandler, {passive:false});
+  document.addEventListener('touchmove', moveHandler, {passive:false});
+  document.addEventListener('mouseup', endHandler);
+  document.addEventListener('touchend', endHandler);
+}
+
+async function captureOCRRegion() {
+  const progress = document.getElementById('ocrProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Capturing frame…';
+
+  try {
+    // Get video element
+    const video = document.querySelector('#qr-reader video');
+    if (!video) { progress.style.display='none'; return; }
+
+    // Get selected box in overlay coords
+    const box = document.getElementById('ocrBox');
+    const overlay = document.getElementById('ocrOverlay');
+    const boxRect = box.getBoundingClientRect();
+    const overlayRect = overlay.getBoundingClientRect();
+
+    // Scale to video dimensions
+    const scaleX = video.videoWidth / overlayRect.width;
+    const scaleY = video.videoHeight / overlayRect.height;
+
+    const sx = (boxRect.left - overlayRect.left) * scaleX;
+    const sy = (boxRect.top - overlayRect.top) * scaleY;
+    const sw = boxRect.width * scaleX;
+    const sh = boxRect.height * scaleY;
+
+    if (sw < 10 || sh < 10) {
+      progress.style.display = 'none';
+      return;
+    }
+
+    // Draw to canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = sw; canvas.height = sh;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, sw, sh);
+
+    progress.textContent = 'Reading text…';
+
+    // Run Tesseract OCR
+    const result = await Tesseract.recognize(canvas, 'eng', {
+      tessedit_char_whitelist: '0123456789',
+    });
+
+    const digits = result.data.text.replace(/\D/g, '');
+    progress.style.display = 'none';
+
+    if (digits.length >= 6) {
+      const code = digits;
+      showToast('Extracted: ' + code);
+      document.getElementById('ocrBox').style.width = '0';
+      document.getElementById('ocrBox').style.height = '0';
+      toggleOCR(); // exit OCR mode
+      handleScannedCode(code);
+    } else {
+      showToast('No numbers found — try again');
+    }
+  } catch(err) {
+    progress.style.display = 'none';
+    showToast('OCR failed — try again');
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════
+// MULTI-CODE MANAGEMENT
+// ═══════════════════════════════
+function addToMulti(code) {
+  if (multiScannedCodes.includes(code)) return;
+  multiScannedCodes.push(code);
+  renderAddedList();
+}
+
+function removeFromMulti(code) {
+  multiScannedCodes = multiScannedCodes.filter(c => c !== code);
+  renderAddedList();
+}
+
+function renderAddedList() {
+  const wrap = document.getElementById('addedWrap');
+  if (multiScannedCodes.length === 0) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('addedList').innerHTML = multiScannedCodes.map(c => `
+    <div class="added-item">
+      <span class="added-code">${c}</span>
+      <button class="added-remove" onclick="removeFromMulti('${c}')">×</button>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════
+// LOOKUPS
+// ═══════════════════════════════
+function lookupSingle() {
+  const raw = document.getElementById('singleInput').value.trim();
+  if (!raw) return;
+  const code = extractCode(raw);
+  lookupCodes([code]);
+}
+
+function lookupMulti() {
+  const textArea = document.getElementById('multiInput').value;
+  const fromText = textArea.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).map(extractCode).filter(Boolean);
+  const all = [...new Set([...multiScannedCodes, ...fromText])];
+  if (all.length === 0) { showToast('Enter at least one barcode'); return; }
+  lookupCodes(all);
+}
+
+async function lookupCodes(codes) {
+  products = [];
+  stopCamera();
+  navigateTo('pageResults');
+  renderResults(); // show loading skeletons
+
+  // Show skeletons
+  const grid = document.getElementById('resultsGrid');
+  grid.innerHTML = codes.map(c => `
+    <div class="product-list-card plc-loading" id="card-${c}">
+      <div class="plc-thumb" style="background:#eee;"></div>
+      <div class="plc-info">
+        <div class="plc-brand">Looking up…</div>
+        <div class="plc-name">${c}</div>
+        <div class="plc-prices"><span class="plc-sale" style="color:#ccc;">—</span></div>
+      </div>
+    </div>`).join('');
+
+  // Fetch each product (parallel, up to 3 at a time)
+  const chunks = [];
+  for (let i=0; i<codes.length; i+=3) chunks.push(codes.slice(i,i+3));
+
+  for (const chunk of chunks) {
+    await Promise.all(chunk.map(code => fetchProduct(code)));
+  }
+
+  // Save recents
+  codes.forEach(c => saveRecent(c));
+  renderRecent();
+
+  // Re-render final state
+  renderResults();
+
+  // If only 1 product, go straight to detail
+  if (products.length === 1) {
+    openDetail(0);
+  }
+}
+
+async function fetchProduct(code) {
+  const productUrl = `https://www.thedealoutlet.com/ae-en/${code}.html`;
+
+  const prompt = `You must fetch and read this product page URL: ${productUrl}
+
+This is a Salesforce Commerce Cloud product page. Extract the following and return ONLY a JSON object, no markdown, no explanation:
+
+{
+  "name": "full product name",
+  "brand": "brand/manufacturer name",
+  "salePrice": 495,
+  "originalPrice": 1715,
+  "currency": "AED",
+  "discount": 71,
+  "description": "full product description text",
+  "images": ["url1","url2","url3"],
+  "productUrl": "${productUrl}",
+  "found": true
+}
+
+For images: The SFCC image URL pattern is:
+https://www.thedealoutlet.com/dw/image/v2/BGBX_PRD/on/demandware.static/-/Sites-thedealoutlet-master-catalog/default/images/${code}_1.jpg?sw=800&sh=1200
+
+Try suffixes _1, _2, _3 for multiple images. Include all that likely exist.
+
+If product is not found on the website, return exactly: {"found":false,"code":"${code}"}
+
+Return only raw JSON.`;
+
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON');
+
+    const p = JSON.parse(match[0]);
+    p.code = code;
+
+    // Build fallback images if none returned
+    if (!p.images || p.images.length === 0) {
+      p.images = [
+        `https://www.thedealoutlet.com/dw/image/v2/BGBX_PRD/on/demandware.static/-/Sites-thedealoutlet-master-catalog/default/images/${code}_1.jpg?sw=800&sh=1200`,
+        `https://www.thedealoutlet.com/dw/image/v2/BGBX_PRD/on/demandware.static/-/Sites-thedealoutlet-master-catalog/default/images/${code}_2.jpg?sw=800&sh=1200`,
+        `https://www.thedealoutlet.com/dw/image/v2/BGBX_PRD/on/demandware.static/-/Sites-thedealoutlet-master-catalog/default/images/${code}_3.jpg?sw=800&sh=1200`
+      ];
+    }
+
+    products.push(p);
+    updateCard(code, p);
+
+  } catch(err) {
+    const fallback = {
+      code, found: false,
+      images: [
+        `https://www.thedealoutlet.com/dw/image/v2/BGBX_PRD/on/demandware.static/-/Sites-thedealoutlet-master-catalog/default/images/${code}_1.jpg?sw=800&sh=1200`
+      ],
+      productUrl: `https://www.thedealoutlet.com/ae-en/${code}.html`
+    };
+    products.push(fallback);
+    updateCard(code, fallback);
+  }
+}
+
+function updateCard(code, p) {
+  const el = document.getElementById('card-' + code);
+  if (!el) return;
+  const idx = products.findIndex(x => x.code === code);
+
+  if (!p.found) {
+    el.outerHTML = `
+      <div class="product-list-card" onclick="openDetail(${idx})">
+        <div class="plc-thumb">
+          <img src="${p.images[0]}" onerror="this.parentNode.innerHTML='📦'" alt="">
+        </div>
+        <div class="plc-info">
+          <div class="plc-brand">THE DEAL OUTLET</div>
+          <div class="plc-name">${code}</div>
+          <div class="plc-notfound">Product not found on website</div>
+        </div>
+        <div class="plc-chevron">›</div>
+      </div>`;
+    return;
+  }
+
+  const hasDiscount = p.originalPrice && p.originalPrice > p.salePrice;
+  el.outerHTML = `
+    <div class="product-list-card" onclick="openDetail(${idx})">
+      <div class="plc-thumb">
+        <img src="${p.images[0]}" onerror="this.src=''" alt="${p.name||''}">
+      </div>
+      <div class="plc-info">
+        <div class="plc-brand">${p.brand || 'THE DEAL OUTLET'}</div>
+        <div class="plc-name">${p.name || code}</div>
+        <div class="plc-prices">
+          <span class="plc-sale">${Number(p.salePrice||0).toLocaleString()} <small style="font-size:10px;font-weight:400;color:var(--mid)">${p.currency||'AED'}</small></span>
+          ${hasDiscount ? `<span class="plc-orig">${Number(p.originalPrice).toLocaleString()}</span>` : ''}
+        </div>
+        ${hasDiscount ? `<div class="plc-badge">-${Math.round(p.discount||0)}% OFF</div>` : ''}
+      </div>
+      <div class="plc-chevron">›</div>
+    </div>`;
+}
+
+function renderResults() {
+  // Only called initially to set up; updateCard() handles per-item refresh
+}
+
+// ═══════════════════════════════
+// DETAIL VIEW
+// ═══════════════════════════════
+function openDetail(idx) {
+  const p = products[idx];
+  if (!p) return;
+
+  currentCarouselIdx = 0;
+  carouselImages = p.images || [];
+
+  // Carousel
+  const track = document.getElementById('carouselTrack');
+  track.innerHTML = carouselImages.map(url => `
+    <div class="carousel-slide">
+      <img src="${url}" onerror="this.parentNode.style.display='none'" alt="Product">
+    </div>`).join('');
+
+  // Dots
+  const dots = document.getElementById('carouselDots');
+  dots.innerHTML = carouselImages.length > 1
+    ? carouselImages.map((_,i) => `<div class="dot ${i===0?'active':''}" onclick="carouselGo(${i})"></div>`).join('')
+    : '';
+
+  updateCarousel();
+
+  // Show/hide arrows
+  document.getElementById('carouselPrev').style.display = carouselImages.length > 1 ? 'flex' : 'none';
+  document.getElementById('carouselNext').style.display = carouselImages.length > 1 ? 'flex' : 'none';
+
+  // Discount badge
+  const hasDiscount = p.originalPrice && p.originalPrice > p.salePrice;
+  const discEl = document.getElementById('detailDiscount');
+  if (hasDiscount && p.discount) {
+    discEl.style.display = 'block';
+    discEl.textContent = `-${Math.round(p.discount)}%`;
+  } else {
+    discEl.style.display = 'none';
+  }
+
+  // Info
+  const info = document.getElementById('detailInfo');
+  if (!p.found) {
+    info.innerHTML = `
+      <div class="not-found-card">
+        <div class="nf-icon">🔍</div>
+        <div class="nf-title">Product Not Found on Website</div>
+        <div class="nf-msg">Barcode <strong>${p.code}</strong> could not be found on thedealoutlet.com. The product may be delisted or the code may be incorrect.</div>
+      </div>
+      <div style="margin-top:16px;">
+        <a href="${p.productUrl}" target="_blank" class="btn-open-site">Try on Website ↗</a>
+      </div>`;
+  } else {
+    const savingsText = hasDiscount
+      ? `<div class="detail-savings">You save ${(Number(p.originalPrice) - Number(p.salePrice)).toLocaleString()} ${p.currency||'AED'} (${Math.round(p.discount||0)}% off)</div>`
+      : '';
+
+    info.innerHTML = `
+      <div class="detail-brand">${p.brand || 'THE DEAL OUTLET'}</div>
+      <div class="detail-name">${p.name || p.code}</div>
+      <div class="detail-prices">
+        <span class="detail-sale">${Number(p.salePrice||0).toLocaleString()}<span class="detail-curr">${p.currency||'AED'}</span></span>
+        ${hasDiscount ? `<span class="detail-orig">${Number(p.originalPrice).toLocaleString()}</span>` : ''}
+      </div>
+      ${savingsText}
+      <div class="detail-sku">SKU: ${p.code}</div>
+      ${p.description ? `<div class="detail-desc-label">Description</div><div class="detail-desc">${p.description.replace(/\n/g,'<br>')}</div>` : ''}
+      <a href="${p.productUrl}" target="_blank" class="btn-open-site">Open on TDO Website ↗</a>
+    `;
+  }
+
+  // Add swipe on carousel
+  setupCarouselSwipe();
+
+  // If coming from results list, push; if from home (single), push
+  navigateTo('pageDetail');
+}
+
+function carouselMove(dir) {
+  currentCarouselIdx = Math.max(0, Math.min(carouselImages.length - 1, currentCarouselIdx + dir));
+  updateCarousel();
+}
+
+function carouselGo(i) {
+  currentCarouselIdx = i;
+  updateCarousel();
+}
+
+function updateCarousel() {
+  document.getElementById('carouselTrack').style.transform = `translateX(-${currentCarouselIdx * 100}%)`;
+  document.getElementById('carouselCounter').textContent = carouselImages.length > 1
+    ? `${currentCarouselIdx+1} / ${carouselImages.length}` : '';
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===currentCarouselIdx));
+}
+
+function setupCarouselSwipe() {
+  const carousel = document.getElementById('detailCarousel');
+  let startX = 0;
+  carousel.ontouchstart = e => { startX = e.touches[0].clientX; };
+  carousel.ontouchend = e => {
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) carouselMove(diff > 0 ? 1 : -1);
+  };
+}
+
+// ═══════════════════════════════
+// UTILS
+// ═══════════════════════════════
+function extractCode(text) {
+  const urlMatch = text.match(/\/(\d{8,15})\.html/);
+  if (urlMatch) return urlMatch[1];
+  const digits = text.replace(/\D/g,'');
+  if (digits.length >= 6) return digits;
+  return text.trim();
+}
+
+function saveRecent(code) {
+  recent = [code, ...recent.filter(c=>c!==code)].slice(0, 10);
+  localStorage.setItem('tdo_recent_v2', JSON.stringify(recent));
+}
+
+function renderRecent() {
+  const wrap = document.getElementById('recentWrap');
+  if (recent.length === 0) { wrap.style.display='none'; return; }
+  wrap.style.display = 'block';
+  document.getElementById('recentChips').innerHTML = recent.map(c =>
+    `<div class="chip" onclick="lookupCodes(['${c}'])">${c}</div>`
+  ).join('');
+}
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+renderRecent();
+</script>
+</body>
+</html>
