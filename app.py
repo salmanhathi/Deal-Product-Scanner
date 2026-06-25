@@ -399,11 +399,14 @@ def upload_excel():
                     new_map[primary] = primary
 
         barcode_map = new_map
+        primary_codes = sorted(set(new_map.values()))
+        pairs = len([k for k, v in new_map.items() if k != v])
         return jsonify({
             "ok": True,
-            "total_rows": len([v for v in new_map.values()]),
-            "mapped_pairs": len([k for k, v in new_map.items() if k != v]),
-            "message": f"Loaded {len(new_map)} barcode entries"
+            "products": len(primary_codes),
+            "pairs": pairs,
+            "primary_codes": primary_codes,
+            "message": f"Loaded {len(primary_codes)} products, {pairs} fallback pairs"
         })
 
     except Exception as e:
