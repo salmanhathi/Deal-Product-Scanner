@@ -10,7 +10,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'tdo-finder-secret-change-me')
 
-# ── PIN is set via environment variable TDO_PIN (default 1234 for local dev) ──
 ACCESS_PIN = os.environ.get('TDO_PIN', '1234')
 
 HEADERS = {
@@ -27,6 +26,14 @@ PLACEHOLDER_SIGNALS = [
     'noimagelarge', 'noimage', 'no_image',
     '/dw58870029/', 'blank.gif', '1x1', 'pixel',
 ]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BARCODE MAP  — loaded from uploaded Excel
+# Key   = fallback/physical barcode (Column B)
+# Value = primary/website barcode   (Column A)
+# ─────────────────────────────────────────────────────────────────────────────
+barcode_map = {}   # { fallback_code: primary_code }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AUTH
@@ -63,7 +70,7 @@ def auth_check():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# EXTRACTORS  (same as product_health_monitor app.py)
+# EXTRACTORS
 # ─────────────────────────────────────────────────────────────────────────────
 
 def extract_prices(soup):
@@ -229,22 +236,23 @@ def extract_description(soup):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CORE LOOKUP  — tries primary barcode, falls back to secondary if needed
+# FETCH ONE CODE FROM TDO WEBSITE
 # ─────────────────────────────────────────────────────────────────────────────
 
 def fetch_one_code(code):
-    """Fetch and parse a single TDO product page. Returns dict with found=True/False."""
+    """Try fetching a product page by barcode. Returns parsed dict or None if not found."""
     code = str(code).strip()
     url = f"https://www.thedealoutlet.com/ae-en/{code}.html"
     try:
         r = requests.get(url, headers=HEADERS, timeout=15,
                          verify=False, allow_redirects=True)
+
         if r.status_code != 200:
-            return None  # signal: not found / error
+            return None
 
         soup = BeautifulSoup(r.text, 'html.parser')
 
-        # Detect soft-404 (redirected to homepage or search)
+        # Detect soft-404 (redirected to homepage or search page)
         canonical = soup.find('link', rel='canonical')
         product_url = canonical['href'] if canonical and canonical.get('href') else r.url
         if 'search' in product_url or product_url.rstrip('/') == 'https://www.thedealoutlet.com/ae-en':
@@ -277,42 +285,44 @@ def fetch_one_code(code):
         return None
 
 
-def lookup_product(primary_code, fallback_code=None):
-    """Try primary barcode; if it fails and fallback exists, try that."""
-    primary_code = str(primary_code).strip() if primary_code else ''
-    fallback_code = str(fallback_code).strip() if fallback_code else ''
+# ─────────────────────────────────────────────────────────────────────────────
+# SMART LOOKUP
+# Logic:
+#   1. Try the scanned code directly on TDO website
+#   2. If not found → check barcode_map: is this a known physical/fallback barcode?
+#      If yes → get the primary (website) barcode from the map → try that on TDO
+#   3. If still not found → return not found
+# ─────────────────────────────────────────────────────────────────────────────
 
-    # Clean up empty / 'nan' values from Excel
-    if primary_code.lower() in ('', 'nan', 'none', '-'):
-        primary_code = ''
-    if fallback_code.lower() in ('', 'nan', 'none', '-'):
-        fallback_code = ''
+def lookup_product(scanned_code):
+    scanned_code = str(scanned_code).strip()
 
-    result = None
+    # Step 1: Try scanned code directly on TDO
+    result = fetch_one_code(scanned_code)
+    if result:
+        result['used_fallback'] = False
+        result['scanned_code'] = scanned_code
+        return result
 
-    if primary_code:
+    # Step 2: Look up in barcode map — scanned code might be a physical barcode
+    primary_code = barcode_map.get(scanned_code)
+    if primary_code and primary_code != scanned_code:
         result = fetch_one_code(primary_code)
-
-    if result is None and fallback_code and fallback_code != primary_code:
-        result = fetch_one_code(fallback_code)
         if result:
             result['used_fallback'] = True
-            result['primary_code'] = primary_code
+            result['scanned_code'] = scanned_code   # what the user scanned
+            result['code'] = primary_code           # what actually worked
+            return result
 
-    if result is None:
-        code_used = primary_code or fallback_code
-        return {
-            "found":        False,
-            "code":         primary_code,
-            "fallbackCode": fallback_code,
-            "error":        "Product not found on website",
-            "productUrl":   f"https://www.thedealoutlet.com/ae-en/{code_used}.html" if code_used else "",
-        }
-
-    result.setdefault('used_fallback', False)
-    result.setdefault('primary_code', primary_code)
-    result['fallbackCode'] = fallback_code
-    return result
+    # Step 3: Not found anywhere
+    return {
+        "found":        False,
+        "code":         scanned_code,
+        "scanned_code": scanned_code,
+        "used_fallback": False,
+        "error":        "Not found on website and not in barcode map",
+        "productUrl":   f"https://www.thedealoutlet.com/ae-en/{scanned_code}.html",
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -328,47 +338,84 @@ def index():
 @login_required
 def lookup():
     data = request.get_json()
-    # Each item: {primary, fallback}
-    items = data.get('items', [])
-    if not items:
+    # Accept a flat list of scanned codes — logic is all server-side now
+    codes = data.get('codes', [])
+    if not codes:
         return jsonify({"error": "No codes provided"}), 400
-    if len(items) > 50:
-        return jsonify({"error": "Max 50 items at once"}), 400
-
-    def worker(item):
-        return lookup_product(item.get('primary', ''), item.get('fallback', ''))
+    if len(codes) > 50:
+        return jsonify({"error": "Max 50 codes at once"}), 400
 
     with ThreadPoolExecutor(max_workers=8) as ex:
-        results = list(ex.map(worker, items))
+        results = list(ex.map(lookup_product, codes))
 
     return jsonify({"results": results})
 
 
-@app.route('/parse-excel', methods=['POST'])
+@app.route('/upload-excel', methods=['POST'])
 @login_required
-def parse_excel():
-    """Accept uploaded .xlsx and return list of {primary, fallback} pairs."""
+def upload_excel():
+    """
+    Upload Excel to load the barcode map.
+    Column A = Primary barcode (on TDO website URL)
+    Column B = Physical/fallback barcode (on the product itself)
+    Row 1 = header (skipped)
+    File can have any name.
+    """
+    global barcode_map
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
     f = request.files['file']
-    if not f.filename.endswith(('.xlsx', '.xls', '.csv')):
+    if not f.filename.lower().endswith(('.xlsx', '.xls', '.csv')):
         return jsonify({"error": "Please upload an .xlsx, .xls or .csv file"}), 400
 
     try:
-        import openpyxl, io
-        wb = openpyxl.load_workbook(io.BytesIO(f.read()), data_only=True)
-        ws = wb.active
-        items = []
-        for row in ws.iter_rows(min_row=2, values_only=True):  # skip header row
-            primary  = str(row[0]).strip() if row[0] is not None else ''
-            fallback = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ''
-            # Skip empty rows and 'nan'
-            if primary.lower() in ('', 'nan', 'none') and fallback.lower() in ('', 'nan', 'none'):
-                continue
-            items.append({"primary": primary, "fallback": fallback})
-        return jsonify({"items": items, "count": len(items)})
+        new_map = {}
+        filename = f.filename.lower()
+
+        if filename.endswith('.csv'):
+            import csv, io
+            content = f.read().decode('utf-8-sig')
+            reader = csv.reader(io.StringIO(content))
+            next(reader, None)  # skip header
+            for row in reader:
+                primary  = str(row[0]).strip() if len(row) > 0 else ''
+                physical = str(row[1]).strip() if len(row) > 1 else ''
+                if primary and primary.lower() not in ('nan', 'none'):
+                    # Map physical barcode → primary barcode
+                    if physical and physical.lower() not in ('nan', 'none', ''):
+                        new_map[physical] = primary
+                    # Also map primary to itself (direct lookup still works)
+                    new_map[primary] = primary
+        else:
+            import openpyxl, io
+            wb = openpyxl.load_workbook(io.BytesIO(f.read()), data_only=True)
+            ws = wb.active
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                primary  = str(row[0]).strip() if row[0] is not None else ''
+                physical = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ''
+                if primary and primary.lower() not in ('nan', 'none'):
+                    if physical and physical.lower() not in ('nan', 'none', ''):
+                        new_map[physical] = primary
+                    new_map[primary] = primary
+
+        barcode_map = new_map
+        return jsonify({
+            "ok": True,
+            "total_rows": len([v for v in new_map.values()]),
+            "mapped_pairs": len([k for k, v in new_map.items() if k != v]),
+            "message": f"Loaded {len(new_map)} barcode entries"
+        })
+
     except Exception as e:
         return jsonify({"error": f"Failed to read file: {str(e)}"}), 400
+
+
+@app.route('/barcode-map-status')
+@login_required
+def barcode_map_status():
+    total = len(set(barcode_map.values()))
+    pairs = len([k for k, v in barcode_map.items() if k != v])
+    return jsonify({"loaded": total > 0, "products": total, "pairs": pairs})
 
 
 if __name__ == '__main__':
