@@ -439,13 +439,16 @@ async function handleXlFile(file){
   document.getElementById('xlBtn').style.display='none';
   const fd=new FormData();fd.append('file',file);
   try{
-    const r=await fetch('/parse-excel',{method:'POST',body:fd});
+    // /upload-excel loads the barcode map on the server and returns row count
+    const r=await fetch('/upload-excel',{method:'POST',body:fd});
     const d=await r.json();
     if(d.error){showToast(d.error);return;}
-    xlItems=d.items;
-    document.getElementById('xlMsg').textContent=`${d.count} product row${d.count!==1?'s':''} loaded`;
+    // Store primary codes for lookup (server now knows the full map)
+    xlItems=d.primary_codes.map(c=>({primary:c,fallback:''}));
+    document.getElementById('xlMsg').textContent=`${d.products} products · ${d.pairs} fallback pairs loaded`;
     document.getElementById('xlLoaded').style.display='flex';
     document.getElementById('xlBtn').style.display='block';
+    showToast('Barcode map loaded ✓');
   }catch(e){showToast('Failed to read file');}
 }
 function handleXlDrop(e){
@@ -478,29 +481,33 @@ async function runLookup(items){
       </div>
     </div>`).join('');
 
+  // Flatten items to plain code strings — server handles all fallback logic
+  const codes=items.map(it=>typeof it==='string'?it:(it.primary||it.fallback||'')).filter(Boolean);
+
   // Batch into groups of 8
-  for(let i=0;i<items.length;i+=8){
-    const batch=items.slice(i,i+8);
+  for(let i=0;i<codes.length;i+=8){
+    const batch=codes.slice(i,i+8);
     try{
       const r=await fetch('/lookup',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({items:batch})
+        body:JSON.stringify({codes:batch})
       });
       if(r.status===401){showToast('Session expired — please re-login');doLogout();return;}
       const d=await r.json();
+      if(d.error){showToast(d.error);return;}
       d.results.forEach((p,j)=>{
         p._idx=i+j;
         products.push(p);
         renderCard(p,i+j);
       });
     }catch(e){
-      batch.forEach((_,j)=>{
-        const p={found:false,code:batch[j].primary||'?',error:'Server error',_idx:i+j};
+      batch.forEach((code,j)=>{
+        const p={found:false,code:code,error:'Server error — check Flask terminal',_idx:i+j};
         products.push(p);renderCard(p,i+j);
       });
     }
   }
-  items.map(it=>it.primary).filter(Boolean).forEach(saveRecent);
+  codes.filter(Boolean).forEach(saveRecent);
   renderRecent();
   if(products.length===1)openDetail(0);
 }
