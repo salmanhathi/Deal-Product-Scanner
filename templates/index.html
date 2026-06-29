@@ -6,132 +6,137 @@
 <title>TDO Product Finder</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
-:root{
-  --black:#0D0D0D;--off-white:#F7F5F2;--gold:#C49A3C;--gold2:#E8C96A;
-  --red:#C0392B;--mid:#888;--border:#E8E4DE;--surface:#fff;
-}
+:root{--blk:#0D0D0D;--bg:#F7F5F2;--gold:#C49A3C;--gold2:#E8C96A;--red:#C0392B;--mid:#888;--bdr:#E8E4DE;--wh:#fff;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
-body{background:var(--off-white);color:var(--black);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;flex-direction:column;height:100%;}
+body{background:var(--bg);color:var(--blk);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;flex-direction:column;height:100%;}
 
-/* ── HEADER ── */
-.hdr{background:var(--black);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:100;}
+/* HEADER */
+.hdr{background:var(--blk);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .hdr-back{background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;padding:4px 8px 4px 0;display:none;align-items:center;line-height:1;}
 .hdr-back.on{display:flex;}
 .hdr-title{flex:1;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff;line-height:1.4;}
 .hdr-title span{color:var(--gold);display:block;font-size:9px;letter-spacing:2px;margin-top:1px;}
-.hdr-badge{background:var(--gold);color:var(--black);font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;display:none;}
+.hdr-badge{background:var(--gold);color:var(--blk);font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;display:none;}
 .hdr-badge.on{display:block;}
-.hdr-logout{background:none;border:1.5px solid #333;color:var(--mid);font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;white-space:nowrap;}
-.hdr-logout:active{border-color:var(--gold);color:var(--gold);}
+.hdr-lock{background:none;border:1.5px solid #333;color:var(--mid);font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;letter-spacing:1px;display:none;}
+.hdr-lock.on{display:block;}
 
-/* ── PAGES ── */
+/* PAGES */
 .page{display:none;flex:1;flex-direction:column;overflow:hidden;}
 .page.on{display:flex;}
 
-/* ── PIN SCREEN ── */
-.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:24px;}
+/* PIN */
+.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px;}
 .pin-logo{font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
 .pin-sub{font-size:12px;color:var(--mid);text-align:center;line-height:1.6;}
-.pin-input{width:180px;text-align:center;padding:14px;font-size:28px;letter-spacing:8px;font-family:'SF Mono',monospace;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;outline:none;color:var(--black);}
+.pin-input{width:180px;text-align:center;padding:14px;font-size:28px;letter-spacing:8px;font-family:'SF Mono',monospace;background:var(--wh);border:1.5px solid var(--bdr);border-radius:8px;outline:none;color:var(--blk);}
 .pin-input:focus{border-color:var(--gold);}
-.pin-btn{width:180px;padding:14px;background:var(--gold);color:var(--black);border:none;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
-.pin-btn:active{background:var(--gold2);}
-.pin-error{font-size:12px;color:var(--red);min-height:18px;}
+.pin-btn{width:180px;padding:14px;background:var(--gold);color:var(--blk);border:none;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+.pin-err{font-size:12px;color:var(--red);min-height:18px;text-align:center;}
 
-/* ── HOME ── */
+/* HOME */
 .home-scroll{flex:1;overflow-y:auto;}
-.tabs{display:flex;background:var(--black);padding:0 16px 14px;gap:8px;}
+.tabs{display:flex;background:var(--blk);padding:0 16px 14px;gap:8px;}
 .tab{flex:1;padding:10px 4px;background:#1a1a1a;border:1.5px solid #333;color:var(--mid);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .2s;text-align:center;}
-.tab.on{background:var(--gold);color:var(--black);border-color:var(--gold);}
+.tab.on{background:var(--gold);color:var(--blk);border-color:var(--gold);}
 .panel{display:none;}.panel.on{display:block;}
 
-/* ── CAMERA ── */
-.cam-panel{background:var(--black);}
+/* MAP STATUS BAR */
+.map-bar{margin:14px 16px 0;padding:9px 13px;background:var(--wh);border:1px solid var(--bdr);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.map-bar-txt{font-size:11px;color:var(--mid);}
+.map-bar-txt strong{color:var(--blk);}
+.map-bar-upload{background:none;border:1.5px solid var(--gold);color:var(--gold);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 11px;border-radius:4px;cursor:pointer;white-space:nowrap;}
+.map-bar-upload:active{background:var(--gold);color:var(--blk);}
+.map-bar-input{display:none;}
+
+/* CAMERA */
+.cam-panel{background:var(--blk);}
 .cam-box{position:relative;background:#000;display:none;}
 #qr-reader{width:100%;}
 #qr-reader video{width:100%!important;display:block;}
 #qr-reader img{display:none!important;}
 #qr-reader__dashboard_section_swaplink,#qr-reader__status_span,
 #qr-reader__dashboard_section_csr,#qr-reader__header_message{display:none!important;}
-.viewfinder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10;}
-.vf{width:72%;max-width:290px;height:165px;position:relative;}
+.vf-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10;}
+.vf{width:72%;max-width:290px;height:160px;position:relative;}
 .vf::before,.vf::after,.vf i::before,.vf i::after{content:'';position:absolute;width:22px;height:22px;border-color:var(--gold);border-style:solid;}
 .vf::before{top:0;left:0;border-width:3px 0 0 3px;}
 .vf::after{top:0;right:0;border-width:3px 3px 0 0;}
 .vf i::before{bottom:0;left:0;border-width:0 0 3px 3px;}
 .vf i::after{bottom:0;right:0;border-width:0 3px 3px 0;}
-.vf-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.4);white-space:nowrap;text-transform:uppercase;}
-.scanline{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:sl 2s linear infinite;}
-@keyframes sl{0%{top:10%}50%{top:88%}100%{top:10%}}
-.cam-btns{display:flex;gap:8px;padding:12px 16px;background:var(--black);}
-.cbtn{flex:1;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;border:none;cursor:pointer;transition:all .15s;}
-.cbtn-start{background:var(--gold);color:var(--black);}
+.vf-lbl{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);white-space:nowrap;text-transform:uppercase;}
+.sl{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:sla 2s linear infinite;}
+@keyframes sla{0%{top:8%}50%{top:88%}100%{top:8%}}
+.cam-btns{display:flex;gap:8px;padding:12px 16px;background:var(--blk);}
+.cbtn{flex:1;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;border:none;cursor:pointer;}
+.cbtn-start{background:var(--gold);color:var(--blk);}
 .cbtn-stop{background:var(--red);color:#fff;display:none;}
-.cam-added{padding:0 16px 12px;background:var(--black);display:none;}
-.cam-added-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;}
-.cam-chips{display:flex;flex-wrap:wrap;gap:6px;}
-.cam-chip{background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:5px 12px;font-size:11px;font-family:'SF Mono',monospace;color:#fff;display:flex;align-items:center;gap:6px;}
-.cam-chip button{background:none;border:none;color:var(--mid);font-size:15px;cursor:pointer;padding:0;line-height:1;}
 .cbtn-go{background:#1a1a1a;border:1.5px solid var(--gold);color:var(--gold);display:none;}
-.cbtn-go.on{display:flex;align-items:center;justify-content:center;}
+.cam-queue{padding:0 16px 14px;background:var(--blk);display:none;}
+.cq-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;}
+.cq-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.cq-chip{background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:5px 12px;font-size:11px;font-family:'SF Mono',monospace;color:#fff;display:flex;align-items:center;gap:6px;}
+.cq-chip button{background:none;border:none;color:var(--mid);font-size:16px;cursor:pointer;line-height:1;}
 
-/* ── TEXT / MULTI PANELS ── */
-.p-body{padding:16px;}
-.p-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;}
-.p-input{width:100%;padding:12px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;font-size:16px;font-family:'SF Mono',monospace;outline:none;transition:border-color .2s;color:var(--black);}
-.p-input:focus{border-color:var(--gold);}
-.p-input::placeholder{font-family:-apple-system,sans-serif;font-size:14px;letter-spacing:0;color:#bbb;}
-.p-textarea{width:100%;min-height:100px;background:var(--surface);border:1.5px solid var(--border);color:var(--black);padding:12px;font-size:14px;font-family:'SF Mono',monospace;border-radius:6px;outline:none;resize:none;line-height:1.8;transition:border-color .2s;}
-.p-textarea:focus{border-color:var(--gold);}
-.p-hint{font-size:11px;color:var(--mid);margin-top:6px;line-height:1.6;}
-.p-btn{width:100%;margin-top:14px;padding:14px;background:var(--black);color:#fff;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;}
-.p-btn:active,.p-btn:hover{background:#333;}
+/* TYPE / MULTI PANELS */
+.pbody{padding:16px;}
+.plbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
+.plbl2{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;margin-top:14px;}
+.pinput{width:100%;padding:12px 14px;background:var(--wh);border:1.5px solid var(--bdr);border-radius:6px;font-size:16px;font-family:'SF Mono',monospace;letter-spacing:.5px;outline:none;transition:border-color .2s;color:var(--blk);}
+.pinput:focus{border-color:var(--gold);}
+.pinput::placeholder{font-family:-apple-system,sans-serif;font-size:14px;letter-spacing:0;color:#bbb;}
+.ptxt{width:100%;min-height:100px;background:var(--wh);border:1.5px solid var(--bdr);color:var(--blk);padding:12px;font-size:14px;font-family:'SF Mono',monospace;border-radius:6px;outline:none;resize:none;line-height:1.8;transition:border-color .2s;}
+.ptxt:focus{border-color:var(--gold);}
+.phint{font-size:11px;color:var(--mid);margin-top:6px;line-height:1.6;}
+.pbtn{width:100%;margin-top:14px;padding:14px;background:var(--blk);color:#fff;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;}
+.pbtn:active,.pbtn:hover{background:#333;}
 
-/* Excel upload */
-.xl-drop{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;margin-top:14px;transition:border-color .2s;}
+/* Excel drop zone */
+.xl-drop{border:2px dashed var(--bdr);border-radius:8px;padding:18px;text-align:center;cursor:pointer;margin-top:14px;transition:border-color .2s;}
 .xl-drop:hover,.xl-drop.drag{border-color:var(--gold);}
 .xl-drop input{display:none;}
-.xl-icon{font-size:28px;margin-bottom:8px;}
+.xl-icon{font-size:26px;margin-bottom:6px;}
 .xl-txt{font-size:12px;color:var(--mid);line-height:1.6;}
-.xl-txt strong{color:var(--black);}
-.xl-loaded{background:#f0faf0;border-color:#4caf50;border-radius:8px;padding:12px 14px;margin-top:10px;font-size:12px;color:#2e7d32;display:none;align-items:center;gap:8px;}
-.xl-loaded.on{display:flex;}
+.xl-txt strong{color:var(--blk);}
+.xl-ok{background:#f0faf0;border:1px solid #a5d6a7;border-radius:6px;padding:10px 13px;margin-top:10px;font-size:12px;color:#2e7d32;display:none;align-items:center;gap:8px;}
+.xl-ok.on{display:flex;}
+.xl-ok button{margin-left:auto;background:none;border:none;color:var(--mid);cursor:pointer;font-size:18px;}
 
-/* Recent */
+/* RECENT */
 .recent{padding:16px;display:none;}
-.r-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);margin-bottom:10px;}
-.r-chips{display:flex;flex-wrap:wrap;gap:8px;}
-.r-chip{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;font-family:'SF Mono',monospace;cursor:pointer;color:var(--black);}
-.r-chip:active{border-color:var(--gold);color:var(--gold);}
+.rlbl{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);margin-bottom:10px;}
+.rchips{display:flex;flex-wrap:wrap;gap:8px;}
+.rchip{background:var(--wh);border:1px solid var(--bdr);border-radius:20px;padding:6px 14px;font-size:12px;font-family:'SF Mono',monospace;cursor:pointer;color:var(--blk);}
+.rchip:active{border-color:var(--gold);color:var(--gold);}
 
-/* ── RESULTS PAGE ── */
-.results-page{background:var(--off-white);}
-.results-scroll{flex:1;overflow-y:auto;padding:16px;}
-.r-grid{display:flex;flex-direction:column;gap:12px;}
-.pcard{background:var(--surface);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;cursor:pointer;border:1.5px solid transparent;animation:fadeUp .3s ease;}
+/* RESULTS */
+.res-page{background:var(--bg);}
+.res-scroll{flex:1;overflow-y:auto;padding:16px;}
+.res-grid{display:flex;flex-direction:column;gap:12px;}
+.pcard{background:var(--wh);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;cursor:pointer;border:1.5px solid transparent;animation:fu .3s ease;}
 .pcard:active,.pcard:hover{border-color:var(--gold);}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.pcard-thumb{width:88px;min-height:88px;background:#f5f5f5;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:26px;}
-.pcard-thumb img{width:100%;height:100%;object-fit:cover;}
-.pcard-info{flex:1;padding:11px;min-width:0;}
-.pcard-brand{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:2px;}
-.pcard-name{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
-.pcard-prices{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;}
-.pcard-sale{font-size:15px;font-weight:800;}
-.pcard-curr{font-size:10px;color:var(--mid);font-weight:400;}
-.pcard-orig{font-size:12px;color:var(--mid);text-decoration:line-through;}
-.pcard-badge{margin-top:4px;display:inline-block;background:var(--red);color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:3px;}
-.pcard-fallback{font-size:10px;color:var(--mid);margin-top:3px;}
-.pcard-notfound{font-size:12px;color:var(--mid);font-style:italic;margin-top:3px;}
-.pcard-chev{padding:10px 8px;display:flex;align-items:center;color:#ddd;font-size:20px;flex-shrink:0;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pthumb{width:88px;min-height:88px;background:#f5f5f5;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:26px;}
+.pthumb img{width:100%;height:100%;object-fit:cover;}
+.pinfo{flex:1;padding:11px;min-width:0;}
+.pbrand{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:2px;}
+.pname{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.pprices{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;}
+.psale{font-size:15px;font-weight:800;}
+.pcurr{font-size:10px;color:var(--mid);}
+.porig{font-size:12px;color:var(--mid);text-decoration:line-through;}
+.pbadge{margin-top:4px;display:inline-block;background:var(--red);color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:3px;}
+.pfb{font-size:10px;color:var(--gold);margin-top:3px;}
+.pnf{font-size:12px;color:var(--mid);font-style:italic;margin-top:3px;}
+.pchev{padding:10px 8px;display:flex;align-items:center;color:#ddd;font-size:20px;flex-shrink:0;}
 .skel{background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.5s infinite;border-radius:4px;}
 @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* ── DETAIL PAGE ── */
-.detail-page{background:var(--surface);}
-.detail-scroll{flex:1;overflow-y:auto;}
-.carousel{position:relative;background:#f5f5f5;overflow:hidden;}
+/* DETAIL */
+.det-page{background:var(--wh);}
+.det-scroll{flex:1;overflow-y:auto;}
+.car{position:relative;background:#f5f5f5;overflow:hidden;}
 .car-track{display:flex;transition:transform .3s ease;}
 .car-slide{min-width:100%;min-height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .car-slide img{width:100%;max-height:420px;object-fit:contain;display:block;}
@@ -142,153 +147,155 @@ body{background:var(--off-white);color:var(--black);font-family:-apple-system,Bl
 .dot.on{background:var(--gold);}
 .car-ctr{position:absolute;top:9px;right:10px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;padding:3px 8px;border-radius:20px;}
 .disc-chip{position:absolute;top:9px;left:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 9px;border-radius:4px;display:none;}
-.d-info{padding:20px;}
-.d-brand{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:5px;}
-.d-name{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:12px;}
-.d-prices{display:flex;align-items:baseline;gap:12px;margin-bottom:5px;flex-wrap:wrap;}
-.d-sale{font-size:26px;font-weight:800;}
-.d-curr{font-size:13px;color:var(--mid);margin-left:2px;}
-.d-orig{font-size:16px;color:var(--mid);text-decoration:line-through;}
-.d-savings{font-size:12px;color:var(--red);font-weight:700;margin-bottom:14px;}
-.d-sku{font-size:11px;font-family:'SF Mono',monospace;color:var(--mid);padding:7px 11px;background:var(--off-white);border-radius:4px;margin-bottom:14px;display:inline-block;}
-.d-fallback-tag{font-size:11px;color:var(--mid);margin-bottom:14px;padding:6px 11px;background:#fff8e1;border-radius:4px;border-left:3px solid var(--gold);}
-.d-desc-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
-.d-desc{font-size:14px;line-height:1.8;color:#444;margin-bottom:22px;}
-.d-btn{display:block;width:100%;background:var(--black);color:#fff;padding:14px;text-align:center;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:6px;margin-bottom:14px;}
-.d-btn:hover{background:#333;}
+.dinfo{padding:20px;}
+.dbrand{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:5px;}
+.dname{font-size:19px;font-weight:700;line-height:1.3;margin-bottom:12px;}
+.dprices{display:flex;align-items:baseline;gap:12px;margin-bottom:5px;flex-wrap:wrap;}
+.dsale{font-size:26px;font-weight:800;}
+.dcurr{font-size:13px;color:var(--mid);margin-left:2px;}
+.dorig{font-size:16px;color:var(--mid);text-decoration:line-through;}
+.dsavings{font-size:12px;color:var(--red);font-weight:700;margin-bottom:14px;}
+.dsku{font-size:11px;font-family:'SF Mono',monospace;color:var(--mid);padding:7px 11px;background:var(--bg);border-radius:4px;margin-bottom:14px;display:inline-block;}
+.dfb-tag{font-size:11px;color:#7b5800;margin-bottom:14px;padding:8px 11px;background:#fff8e1;border-radius:4px;border-left:3px solid var(--gold);line-height:1.5;}
+.ddesc-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
+.ddesc{font-size:14px;line-height:1.8;color:#444;margin-bottom:22px;}
+.dbtn{display:block;width:100%;background:var(--blk);color:#fff;padding:14px;text-align:center;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:6px;margin-bottom:14px;}
+.dbtn:hover{background:#333;}
 .nf-box{padding:28px 20px;text-align:center;}
 .nf-icon{font-size:38px;margin-bottom:12px;}
 .nf-title{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
 .nf-msg{font-size:13px;color:#888;line-height:1.6;margin-bottom:18px;}
 
-/* ── TOAST ── */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--black);color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;letter-spacing:1px;z-index:999;transition:transform .3s;white-space:nowrap;}
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--blk);color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;letter-spacing:1px;z-index:999;transition:transform .3s;white-space:nowrap;}
 .toast.on{transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="hdr">
   <button class="hdr-back" id="hdrBack" onclick="goBack()">←</button>
   <div class="hdr-title">The Deal Product Details Finder<span>thedealoutlet.com</span></div>
   <div class="hdr-badge" id="hdrBadge"></div>
-  <button class="hdr-logout" id="hdrLogout" onclick="doLogout()" style="display:none;">Lock</button>
+  <button class="hdr-lock on" id="hdrLock" onclick="doLogout()" style="display:none;">🔒 Lock</button>
 </div>
 
-<!-- ════ PIN PAGE ════ -->
+<!-- PIN PAGE -->
 <div class="page on" id="pagePIN">
   <div class="pin-wrap">
     <div class="pin-logo">🏷️ TDO Finder</div>
-    <div class="pin-sub">Enter your team PIN to access</div>
+    <div class="pin-sub">Enter your team PIN to continue</div>
     <input class="pin-input" id="pinInput" type="password" inputmode="numeric"
       maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="pin-btn" onclick="doLogin()">Unlock</button>
-    <div class="pin-error" id="pinError"></div>
+    <div class="pin-err" id="pinErr"></div>
   </div>
 </div>
 
-<!-- ════ HOME PAGE ════ -->
+<!-- HOME PAGE -->
 <div class="page" id="pageHome">
   <div class="home-scroll">
-
-    <!-- TABS -->
     <div class="tabs">
       <button class="tab on"  onclick="switchTab('cam')">📷 Camera</button>
       <button class="tab"     onclick="switchTab('type')">🔢 Type</button>
       <button class="tab"     onclick="switchTab('multi')">📦 Multi</button>
     </div>
 
-    <!-- ── CAMERA PANEL ── -->
+    <!-- MAP STATUS BAR — shown on all tabs -->
+    <div class="map-bar" id="mapBar">
+      <div class="map-bar-txt" id="mapTxt">No barcode map loaded</div>
+      <button class="map-bar-upload" onclick="document.getElementById('mapFileInput').click()">
+        Upload Excel
+      </button>
+      <input class="map-bar-input" type="file" id="mapFileInput"
+        accept=".xlsx,.xls,.csv" onchange="uploadMap(this.files[0])">
+    </div>
+
+    <!-- CAMERA PANEL -->
     <div class="panel on cam-panel" id="panelCam">
       <div class="cam-box" id="camBox">
         <div id="qr-reader"></div>
-        <div class="viewfinder">
-          <div class="vf"><i></i>
-            <div class="scanline"></div>
-            <div class="vf-label">Point at barcode · numbers · text</div>
+        <div class="vf-wrap">
+          <div class="vf"><i></i><div class="sl"></div>
+            <div class="vf-lbl">Point at barcode or text</div>
           </div>
         </div>
       </div>
       <div class="cam-btns">
         <button class="cbtn cbtn-start" id="btnStart" onclick="startCam()">▶ Start Camera</button>
         <button class="cbtn cbtn-stop"  id="btnStop"  onclick="stopCam()">⏹ Stop</button>
-        <button class="cbtn cbtn-go on" id="btnGo"    onclick="lookupCamCodes()" style="display:none;">🔍 Look Up</button>
+        <button class="cbtn cbtn-go"    id="btnGo"    onclick="lookupCamQueue()">🔍 Look Up</button>
       </div>
-      <div class="cam-added" id="camAdded">
-        <div class="cam-added-label">Scanned codes</div>
-        <div class="cam-chips" id="camChips"></div>
+      <div class="cam-queue" id="camQueue">
+        <div class="cq-lbl">Scanned codes</div>
+        <div class="cq-chips" id="camChips"></div>
       </div>
     </div>
 
-    <!-- ── TYPE PANEL ── -->
+    <!-- TYPE PANEL -->
     <div class="panel" id="panelType">
-      <div class="p-body">
-        <div class="p-label">Primary Barcode / SKU</div>
-        <input class="p-input" id="typeP" type="text" placeholder="e.g. 020416208650"
-          onkeydown="if(event.key==='Enter')document.getElementById('typeF').focus()">
-        <div class="p-label" style="margin-top:14px;">Fallback Barcode (optional)</div>
-        <input class="p-input" id="typeF" type="text" placeholder="Second barcode if first not found"
+      <div class="pbody">
+        <div class="plbl">Scanned / Product Barcode</div>
+        <input class="pinput" id="typeCode" type="text"
+          placeholder="e.g. 1200143488867 or 094927821677"
           onkeydown="if(event.key==='Enter')lookupTyped()">
-        <button class="p-btn" onclick="lookupTyped()">🔍 Find Product</button>
+        <div class="phint" style="margin-top:8px;">
+          Enter any barcode — the app checks the website first, then your uploaded barcode map automatically.
+        </div>
+        <button class="pbtn" onclick="lookupTyped()">🔍 Find Product</button>
       </div>
     </div>
 
-    <!-- ── MULTI PANEL ── -->
+    <!-- MULTI PANEL -->
     <div class="panel" id="panelMulti">
-      <div class="p-body">
-        <div class="p-label">Paste codes — one per line or comma-separated</div>
-        <textarea class="p-textarea" id="multiText"
-          placeholder="020416208650&#10;104227337532&#10;ABC-456"></textarea>
-        <div class="p-hint">Each line = one product. No fallback in paste mode.</div>
-        <button class="p-btn" onclick="lookupMultiText()">🔍 Find All</button>
+      <div class="pbody">
+        <div class="plbl">Paste barcodes — one per line or comma-separated</div>
+        <textarea class="ptxt" id="multiText"
+          placeholder="1200143488867&#10;094927821677&#10;ABC-456"></textarea>
+        <div class="phint">Each barcode is looked up directly, then checked against your map if not found.</div>
+        <button class="pbtn" onclick="lookupMultiText()">🔍 Find All</button>
 
-        <!-- Excel upload -->
-        <div style="margin-top:20px;">
-          <div class="p-label">Or upload Excel</div>
-          <div class="xl-drop" id="xlDrop" onclick="document.getElementById('xlFile').click()"
+        <div style="margin-top:22px;">
+          <div class="plbl">Or look up all products from Excel</div>
+          <div class="xl-drop" id="xlDrop"
+            onclick="document.getElementById('xlLookupFile').click()"
             ondragover="event.preventDefault();this.classList.add('drag')"
             ondragleave="this.classList.remove('drag')"
             ondrop="handleXlDrop(event)">
-            <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" onchange="handleXlFile(this.files[0])">
+            <input type="file" id="xlLookupFile" accept=".xlsx,.xls,.csv"
+              onchange="lookupFromXl(this.files[0])">
             <div class="xl-icon">📊</div>
             <div class="xl-txt">
-              <strong>Tap to upload Excel / CSV</strong><br>
-              Column A: Primary barcode &nbsp;|&nbsp; Column B: Fallback barcode<br>
-              Row 1 = header (skipped)
+              <strong>Tap to upload Excel and look up all products</strong><br>
+              Column A = Primary barcode &nbsp;|&nbsp; Column B = Physical barcode<br>
+              Looks up all primary barcodes. Row 1 = header (skipped).
             </div>
           </div>
-          <div class="xl-loaded on" id="xlLoaded" style="display:none;">
-            <span>✅</span><span id="xlMsg"></span>
-            <button onclick="clearXl()" style="margin-left:auto;background:none;border:none;color:var(--mid);cursor:pointer;font-size:18px;">×</button>
-          </div>
-          <button class="p-btn" id="xlBtn" onclick="lookupXl()" style="display:none;">🔍 Look Up Excel List</button>
         </div>
       </div>
     </div>
 
-    <!-- RECENT -->
     <div class="recent" id="recentWrap">
-      <div class="r-label">Recent</div>
-      <div class="r-chips" id="recentChips"></div>
+      <div class="rlbl">Recent</div>
+      <div class="rchips" id="recentChips"></div>
     </div>
   </div>
 </div>
 
-<!-- ════ RESULTS PAGE ════ -->
+<!-- RESULTS PAGE -->
 <div class="page" id="pageResults">
-  <div class="results-scroll">
-    <div class="r-grid" id="rGrid"></div>
+  <div class="res-scroll">
+    <div class="res-grid" id="resGrid"></div>
   </div>
 </div>
 
-<!-- ════ DETAIL PAGE ════ -->
+<!-- DETAIL PAGE -->
 <div class="page" id="pageDetail">
-  <div class="detail-scroll">
-    <div class="carousel" id="carousel">
+  <div class="det-scroll">
+    <div class="car" id="carousel">
       <div class="car-track" id="carTrack"></div>
-      <button class="car-arr car-prev" id="carPrev" onclick="carMove(-1)">‹</button>
-      <button class="car-arr car-next" id="carNext" onclick="carMove(1)">›</button>
+      <button class="car-arr car-prev" onclick="carMove(-1)">‹</button>
+      <button class="car-arr car-next" onclick="carMove(1)">›</button>
       <div class="car-dots" id="carDots"></div>
       <div class="car-ctr"  id="carCtr"></div>
       <div class="disc-chip" id="discChip"></div>
@@ -300,68 +307,94 @@ body{background:var(--off-white);color:var(--black);font-family:-apple-system,Bl
 <div class="toast" id="toast"></div>
 
 <script>
-// ════ STATE ════
-let tab='cam', products=[], carIdx=0, carImgs=[], stack=[];
-let recent=JSON.parse(localStorage.getItem('tdo_v6')||'[]');
-let camScanner=null, camOn=false;
-let camCodes=[];        // barcodes scanned in camera mode (accumulate before lookup)
-let xlItems=null;       // parsed excel items [{primary,fallback}]
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let products=[], carIdx=0, carImgs=[], stack=[];
+let recent=JSON.parse(localStorage.getItem('tdo_v7')||'[]');
+let camScanner=null, camOn=false, camQueue=[];
+let mapLoaded=false;
 
-// ════ INIT ════
+// ── INIT ───────────────────────────────────────────────────────────────────────
 (async()=>{
-  const r=await fetch('/auth/check');
-  const d=await r.json();
-  if(d.authenticated) enterApp();
+  const r=await fetch('/auth/check').then(r=>r.json()).catch(()=>({authenticated:false}));
+  if(r.authenticated) enterApp();
+  // Also check map status
+  checkMapStatus();
 })();
 
-// ════ AUTH ════
+// ── AUTH ───────────────────────────────────────────────────────────────────────
 async function doLogin(){
   const pin=document.getElementById('pinInput').value;
-  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})});
-  const d=await r.json();
-  if(d.ok){document.getElementById('pinError').textContent='';enterApp();}
-  else{document.getElementById('pinError').textContent='Incorrect PIN. Try again.';document.getElementById('pinInput').value='';}
+  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({pin})}).then(r=>r.json()).catch(()=>({ok:false}));
+  if(r.ok){document.getElementById('pinErr').textContent='';enterApp();}
+  else{document.getElementById('pinErr').textContent='Incorrect PIN — try again.';
+       document.getElementById('pinInput').value='';}
 }
 async function doLogout(){
   await fetch('/auth/logout',{method:'POST'});
-  session=false;
-  document.getElementById('hdrLogout').style.display='none';
-  stack=[];products=[];camCodes=[];xlItems=null;
-  showPage('pagePIN');
+  products=[];camQueue=[];stack=[];stopCam();
+  document.getElementById('hdrLock').style.display='none';
   document.getElementById('pinInput').value='';
+  showPage('pagePIN');
 }
 function enterApp(){
-  document.getElementById('hdrLogout').style.display='block';
-  renderRecent();
-  showPage('pageHome');
+  document.getElementById('hdrLock').style.display='block';
+  renderRecent();checkMapStatus();showPage('pageHome');
 }
 
-// ════ NAV ════
+// ── NAV ────────────────────────────────────────────────────────────────────────
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
-  const isHome=id==='pageHome'||id==='pagePIN';
+  const isHome=(id==='pageHome'||id==='pagePIN');
   document.getElementById('hdrBack').classList.toggle('on',!isHome);
   const b=document.getElementById('hdrBadge');
   b.classList.toggle('on',id==='pageResults'&&products.length>1);
   if(id==='pageResults')b.textContent=products.length+' products';
 }
 function goBack(){
-  if(stack.length){stack.pop();showPage(stack[stack.length-1]||'pageHome');}
-  else showPage('pageHome');
+  if(stack.length>0){stack.pop();}
+  showPage(stack[stack.length-1]||'pageHome');
 }
 function navTo(id){stack.push(id);showPage(id);}
 
-// ════ TABS ════
+// ── TABS ───────────────────────────────────────────────────────────────────────
 function switchTab(t){
-  tab=t;
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['cam','type','multi'][i]===t));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById({cam:'panelCam',type:'panelType',multi:'panelMulti'}[t]).classList.add('on');
   if(t!=='cam'&&camOn)stopCam();
 }
 
-// ════ CAMERA ════
+// ── MAP STATUS ─────────────────────────────────────────────────────────────────
+async function checkMapStatus(){
+  try{
+    const d=await fetch('/map-status').then(r=>r.json());
+    updateMapBar(d.loaded, d.products, d.pairs);
+  }catch(e){}
+}
+function updateMapBar(loaded, products, pairs){
+  mapLoaded=loaded;
+  const txt=document.getElementById('mapTxt');
+  if(loaded)
+    txt.innerHTML=`Map loaded: <strong>${products}</strong> products · <strong>${pairs}</strong> physical↔primary pairs`;
+  else
+    txt.innerHTML=`<span style="color:var(--red)">⚠ No barcode map</span> — upload Excel to enable fallback lookup`;
+}
+async function uploadMap(file){
+  if(!file)return;
+  showToast('Uploading barcode map…');
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const d=await fetch('/upload-excel',{method:'POST',body:fd}).then(r=>r.json());
+    if(d.error){showToast('Error: '+d.error);return;}
+    updateMapBar(true, d.products, d.pairs);
+    showToast(`✓ ${d.message}`);
+    document.getElementById('mapFileInput').value='';
+  }catch(e){showToast('Upload failed');}
+}
+
+// ── CAMERA ─────────────────────────────────────────────────────────────────────
 function startCam(){
   document.getElementById('camBox').style.display='block';
   document.getElementById('btnStart').style.display='none';
@@ -369,22 +402,15 @@ function startCam(){
   camScanner=new Html5Qrcode("qr-reader");
   camScanner.start(
     {facingMode:"environment"},
-    {fps:15,qrbox:{width:270,height:155},aspectRatio:1.5},
+    {fps:15, qrbox:{width:260,height:150}, aspectRatio:1.5},
     decoded=>{
-      const code=cleanCode(decoded);
-      if(!code)return;
-      if(camCodes.includes(code)){showToast('Already added');return;}
-      camCodes.push(code);
-      renderCamChips();
-      showToast('Scanned: '+code);
-      // Single-code shortcut: if only 1 scanned and user doesn't add more in 1.5s → auto lookup
-      // (commented out — user may want to add more)
-    },
-    ()=>{}
-  ).then(()=>{camOn=true;}).catch(()=>{
-    showToast('Camera denied — use HTTPS');
-    stopCam();
-  });
+      const code=cleanCode(decoded); if(!code)return;
+      if(camQueue.includes(code)){showToast('Already added');return;}
+      camQueue.push(code);
+      renderCamQueue();
+      showToast('✓ Scanned: '+code);
+    }, ()=>{}
+  ).then(()=>{camOn=true;}).catch(()=>{showToast('Camera denied — use HTTPS');stopCam();});
 }
 function stopCam(){
   if(camScanner){camScanner.stop().catch(()=>{});camScanner=null;}
@@ -393,98 +419,78 @@ function stopCam(){
   document.getElementById('btnStart').style.display='flex';
   document.getElementById('btnStop').style.display='none';
 }
-function renderCamChips(){
-  const wrap=document.getElementById('camAdded');
+function renderCamQueue(){
+  const wrap=document.getElementById('camQueue');
   const go=document.getElementById('btnGo');
-  if(!camCodes.length){wrap.style.display='none';go.style.display='none';return;}
+  if(!camQueue.length){wrap.style.display='none';go.style.display='none';return;}
   wrap.style.display='block';go.style.display='flex';
-  document.getElementById('camChips').innerHTML=camCodes.map((c,i)=>`
-    <div class="cam-chip">
-      <span>${esc(c)}</span>
-      <button onclick="removeCamCode(${i})">×</button>
-    </div>`).join('');
+  document.getElementById('camChips').innerHTML=camQueue.map((c,i)=>`
+    <div class="cq-chip"><span>${esc(c)}</span>
+    <button onclick="camQueue.splice(${i},1);renderCamQueue()">×</button></div>`).join('');
 }
-function removeCamCode(i){camCodes.splice(i,1);renderCamChips();}
-function lookupCamCodes(){
-  if(!camCodes.length){showToast('Scan at least one barcode');return;}
-  stopCam();
-  // Camera mode: each code is primary only (no fallback pairing)
-  const items=camCodes.map(c=>({primary:c,fallback:''}));
-  camCodes=[];renderCamChips();
-  runLookup(items);
+function lookupCamQueue(){
+  if(!camQueue.length){showToast('Scan at least one barcode');return;}
+  const codes=[...camQueue];
+  camQueue=[];renderCamQueue();stopCam();
+  runLookup(codes);
 }
 
-// ════ TYPE ════
+// ── TYPE ───────────────────────────────────────────────────────────────────────
 function lookupTyped(){
-  const p=document.getElementById('typeP').value.trim();
-  const f=document.getElementById('typeF').value.trim();
-  if(!p&&!f){showToast('Enter at least one barcode');return;}
-  runLookup([{primary:cleanCode(p)||p, fallback:cleanCode(f)||f}]);
+  const code=cleanCode(document.getElementById('typeCode').value)||
+             document.getElementById('typeCode').value.trim();
+  if(!code){showToast('Enter a barcode');return;}
+  runLookup([code]);
 }
 
-// ════ MULTI TEXT ════
+// ── MULTI TEXT ─────────────────────────────────────────────────────────────────
 function lookupMultiText(){
-  const codes=document.getElementById('multiText').value
-    .split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).map(s=>cleanCode(s)||s);
-  const all=[...new Set(codes)];
-  if(!all.length){showToast('Enter at least one code');return;}
-  runLookup(all.map(c=>({primary:c,fallback:''})));
+  const codes=[...new Set(
+    document.getElementById('multiText').value
+      .split(/[\n,]+/).map(s=>s.trim()).filter(Boolean)
+      .map(s=>cleanCode(s)||s)
+  )];
+  if(!codes.length){showToast('Enter at least one barcode');return;}
+  runLookup(codes);
 }
 
-// ════ EXCEL ════
-async function handleXlFile(file){
+// ── EXCEL LOOKUP (multi tab) ───────────────────────────────────────────────────
+async function lookupFromXl(file){
   if(!file)return;
-  xlItems=null;
-  document.getElementById('xlLoaded').style.display='none';
-  document.getElementById('xlBtn').style.display='none';
+  showToast('Reading Excel…');
+  // First upload the map so server knows the pairs, then look up all primary codes
   const fd=new FormData();fd.append('file',file);
   try{
-    // /upload-excel loads the barcode map on the server and returns row count
-    const r=await fetch('/upload-excel',{method:'POST',body:fd});
-    const d=await r.json();
-    if(d.error){showToast(d.error);return;}
-    // Store primary codes for lookup (server now knows the full map)
-    xlItems=d.primary_codes.map(c=>({primary:c,fallback:''}));
-    document.getElementById('xlMsg').textContent=`${d.products} products · ${d.pairs} fallback pairs loaded`;
-    document.getElementById('xlLoaded').style.display='flex';
-    document.getElementById('xlBtn').style.display='block';
-    showToast('Barcode map loaded ✓');
-  }catch(e){showToast('Failed to read file');}
+    const d=await fetch('/upload-excel',{method:'POST',body:fd}).then(r=>r.json());
+    if(d.error){showToast('Error: '+d.error);return;}
+    updateMapBar(true, d.products, d.pairs);
+    showToast(`Loaded ${d.products} products — looking up…`);
+    // Look up all primary codes from the response
+    runLookup(d.primary_codes);
+  }catch(e){showToast('Failed to read Excel');}
 }
 function handleXlDrop(e){
   e.preventDefault();document.getElementById('xlDrop').classList.remove('drag');
-  const file=e.dataTransfer.files[0];if(file)handleXlFile(file);
-}
-function clearXl(){
-  xlItems=null;
-  document.getElementById('xlFile').value='';
-  document.getElementById('xlLoaded').style.display='none';
-  document.getElementById('xlBtn').style.display='none';
-}
-function lookupXl(){
-  if(!xlItems||!xlItems.length){showToast('No Excel data loaded');return;}
-  runLookup(xlItems);
+  lookupFromXl(e.dataTransfer.files[0]);
 }
 
-// ════ CORE LOOKUP ════
-async function runLookup(items){
+// ── CORE LOOKUP ────────────────────────────────────────────────────────────────
+async function runLookup(codes){
   products=[];stack=[];
   navTo('pageResults');
+
   // Skeleton cards
-  document.getElementById('rGrid').innerHTML=items.map((it,i)=>`
-    <div class="pcard" id="pc-${i}" style="pointer-events:none;">
-      <div class="pcard-thumb skel" style="min-height:88px;"></div>
-      <div class="pcard-info">
-        <div class="skel" style="height:9px;width:55%;margin-bottom:8px;"></div>
-        <div class="skel" style="height:13px;margin-bottom:8px;"></div>
-        <div class="skel" style="height:15px;width:38%;"></div>
+  document.getElementById('resGrid').innerHTML=codes.map((c,i)=>`
+    <div class="pcard" id="pc${i}" style="pointer-events:none">
+      <div class="pthumb skel" style="min-height:88px"></div>
+      <div class="pinfo">
+        <div class="skel" style="height:9px;width:50%;margin-bottom:8px"></div>
+        <div class="skel" style="height:13px;margin-bottom:8px"></div>
+        <div class="skel" style="height:15px;width:38%"></div>
       </div>
     </div>`).join('');
 
-  // Flatten items to plain code strings — server handles all fallback logic
-  const codes=items.map(it=>typeof it==='string'?it:(it.primary||it.fallback||'')).filter(Boolean);
-
-  // Batch into groups of 8
+  // Batch requests (8 at a time)
   for(let i=0;i<codes.length;i+=8){
     const batch=codes.slice(i,i+8);
     try{
@@ -495,71 +501,69 @@ async function runLookup(items){
       if(r.status===401){showToast('Session expired — please re-login');doLogout();return;}
       const d=await r.json();
       if(d.error){showToast(d.error);return;}
-      d.results.forEach((p,j)=>{
-        p._idx=i+j;
-        products.push(p);
-        renderCard(p,i+j);
-      });
+      d.results.forEach((p,j)=>{products.push(p);renderCard(p,i+j);});
     }catch(e){
-      batch.forEach((code,j)=>{
-        const p={found:false,code:code,error:'Server error — check Flask terminal',_idx:i+j};
+      batch.forEach((c,j)=>{
+        const p={found:false,code:c,error:'Server error',_idx:i+j};
         products.push(p);renderCard(p,i+j);
       });
     }
   }
-  codes.filter(Boolean).forEach(saveRecent);
+  codes.forEach(c=>{if(c)saveRecent(c);});
   renderRecent();
   if(products.length===1)openDetail(0);
 }
 
 function renderCard(p,i){
-  const el=document.getElementById('pc-'+i);if(!el)return;
-  const hasDisc=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
+  const el=document.getElementById('pc'+i);if(!el)return;
+  const hasD=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
   const thumb=p.images&&p.images.length
-    ?`<img src="${esc(p.images[0])}" onerror="this.parentNode.innerHTML='📦'" alt="">`
-    :'📦';
-  el.outerHTML = p.found ? `
+    ?`<img src="${esc(p.images[0])}" onerror="this.parentNode.innerHTML='📦'" alt="">`:'📦';
+  el.style.pointerEvents='auto';
+  el.outerHTML=p.found?`
     <div class="pcard" onclick="openDetail(${i})">
-      <div class="pcard-thumb">${thumb}</div>
-      <div class="pcard-info">
-        <div class="pcard-brand">${esc(p.brand||'THE DEAL OUTLET')}</div>
-        <div class="pcard-name">${esc(p.name||p.code)}</div>
-        <div class="pcard-prices">
-          <span class="pcard-sale">${fmt(p.salePrice)}<span class="pcard-curr"> AED</span></span>
-          ${hasDisc?`<span class="pcard-orig">${fmt(p.originalPrice)} AED</span>`:''}
+      <div class="pthumb">${thumb}</div>
+      <div class="pinfo">
+        <div class="pbrand">${esc(p.brand||'THE DEAL OUTLET')}</div>
+        <div class="pname">${esc(p.name||p.code)}</div>
+        <div class="pprices">
+          <span class="psale">${fmt(p.salePrice)}<span class="pcurr"> AED</span></span>
+          ${hasD?`<span class="porig">${fmt(p.originalPrice)} AED</span>`:''}
         </div>
-        ${hasDisc?`<div class="pcard-badge">-${p.discount}% OFF</div>`:''}
-        ${p.used_fallback?`<div class="pcard-fallback">⚡ Found via fallback barcode</div>`:''}
+        ${hasD?`<div class="pbadge">-${p.discount}% OFF</div>`:''}
+        ${p.used_fallback?`<div class="pfb">⚡ Found via barcode map</div>`:''}
       </div>
-      <div class="pcard-chev">›</div>
-    </div>` : `
+      <div class="pchev">›</div>
+    </div>`:`
     <div class="pcard" onclick="openDetail(${i})">
-      <div class="pcard-thumb">🔍</div>
-      <div class="pcard-info">
-        <div class="pcard-brand">NOT FOUND</div>
-        <div class="pcard-name">${esc(p.code||'Unknown')}</div>
-        <div class="pcard-notfound">${esc(p.error||'Product not found on website')}</div>
+      <div class="pthumb">🔍</div>
+      <div class="pinfo">
+        <div class="pbrand" style="color:var(--red)">NOT FOUND</div>
+        <div class="pname">${esc(p.code||'Unknown')}</div>
+        <div class="pnf">${esc(p.error||'Product not found on website')}</div>
       </div>
-      <div class="pcard-chev">›</div>
+      <div class="pchev">›</div>
     </div>`;
 }
 
-// ════ DETAIL ════
+// ── DETAIL ─────────────────────────────────────────────────────────────────────
 function openDetail(i){
   const p=products[i];if(!p)return;
   carIdx=0;carImgs=p.images||[];
 
   document.getElementById('carTrack').innerHTML=
-    carImgs.map(u=>`<div class="car-slide"><img src="${esc(u)}" onerror="this.closest('.car-slide').style.display='none'" alt=""></div>`).join('');
+    carImgs.map(u=>`<div class="car-slide"><img src="${esc(u)}"
+      onerror="this.closest('.car-slide').style.display='none'" alt=""></div>`).join('');
   document.getElementById('carDots').innerHTML=
     carImgs.length>1?carImgs.map((_,j)=>`<div class="dot${j===0?' on':''}" onclick="carGo(${j})"></div>`).join(''):'';
-  document.getElementById('carPrev').style.display=carImgs.length>1?'flex':'none';
-  document.getElementById('carNext').style.display=carImgs.length>1?'flex':'none';
+  document.getElementById('car-prev'+'').style&&(document.querySelector('.car-prev').style.display=carImgs.length>1?'flex':'none');
+  document.querySelector('.car-next').style.display=carImgs.length>1?'flex':'none';
+  document.querySelector('.car-prev').style.display=carImgs.length>1?'flex':'none';
   updateCar();
 
-  const hasDisc=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
+  const hasD=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
   const dc=document.getElementById('discChip');
-  if(hasDisc&&p.discount){dc.style.display='block';dc.textContent=`-${p.discount}%`;}
+  if(hasD&&p.discount){dc.style.display='block';dc.textContent=`-${p.discount}%`;}
   else dc.style.display='none';
 
   const info=document.getElementById('dInfo');
@@ -567,75 +571,66 @@ function openDetail(i){
     info.innerHTML=`<div class="nf-box">
       <div class="nf-icon">🔍</div>
       <div class="nf-title">Product Not Found</div>
-      <div class="nf-msg">
-        Primary: <strong>${esc(p.code||'—')}</strong>${p.fallbackCode?`<br>Fallback: <strong>${esc(p.fallbackCode)}</strong>`:''}<br><br>
-        ${esc(p.error||'Not found on thedealoutlet.com')}
-      </div>
-      ${p.productUrl?`<a href="${esc(p.productUrl)}" target="_blank" class="d-btn">Try on Website ↗</a>`:''}
+      <div class="nf-msg">${esc(p.error||'Not found on thedealoutlet.com')}</div>
+      ${p.productUrl?`<a href="${esc(p.productUrl)}" target="_blank" class="dbtn">Try on Website ↗</a>`:''}
     </div>`;
   }else{
-    const savings=hasDisc?(p.originalPrice-p.salePrice).toFixed(2):0;
+    const sav=hasD?(p.originalPrice-p.salePrice).toFixed(2):0;
     const desc=p.description
-      ?p.description.replace(/\s*\.\.\s*/g,'<br>• ').replace(/^/,'• ')
-      :'';
-    info.innerHTML=`<div class="d-info">
-      <div class="d-brand">${esc(p.brand||'THE DEAL OUTLET')}</div>
-      <div class="d-name">${esc(p.name||p.code)}</div>
-      <div class="d-prices">
-        <span class="d-sale">${fmt(p.salePrice)}<span class="d-curr"> AED</span></span>
-        ${hasDisc?`<span class="d-orig">${fmt(p.originalPrice)} AED</span>`:''}
+      ?p.description.replace(/\s*\.\.\s*/g,'<br>• ').replace(/^/,'• '):'';
+    info.innerHTML=`<div class="dinfo">
+      <div class="dbrand">${esc(p.brand||'THE DEAL OUTLET')}</div>
+      <div class="dname">${esc(p.name||p.code)}</div>
+      <div class="dprices">
+        <span class="dsale">${fmt(p.salePrice)}<span class="dcurr"> AED</span></span>
+        ${hasD?`<span class="dorig">${fmt(p.originalPrice)} AED</span>`:''}
       </div>
-      ${hasDisc?`<div class="d-savings">You save ${fmt(savings)} AED · ${p.discount}% off</div>`:''}
-      <div class="d-sku">SKU: ${esc(p.code)}</div>
-      ${p.used_fallback?`<div class="d-fallback-tag">⚡ Found using fallback barcode (primary <strong>${esc(p.primary_code||'')}</strong> was not found)</div>`:''}
-      ${desc?`<div class="d-desc-lbl">Description</div><div class="d-desc">${desc}</div>`:''}
-      <a href="${esc(p.productUrl||'')}" target="_blank" class="d-btn">Open on TDO Website ↗</a>
+      ${hasD?`<div class="dsavings">You save ${fmt(sav)} AED · ${p.discount}% off</div>`:''}
+      <div class="dsku">SKU: ${esc(p.code)}</div>
+      ${p.used_fallback?`<div class="dfb-tag">
+        ⚡ Scanned barcode <strong>${esc(p.scanned_code||'')}</strong> was not on the website directly.<br>
+        Found using primary barcode <strong>${esc(p.code)}</strong> from your barcode map.
+      </div>`:''}
+      ${desc?`<div class="ddesc-lbl">Description</div><div class="ddesc">${desc}</div>`:''}
+      <a href="${esc(p.productUrl||'')}" target="_blank" class="dbtn">Open on TDO Website ↗</a>
     </div>`;
   }
 
-  // Touch swipe
-  const car=document.getElementById('carousel');
-  let sx=0;
+  // Swipe
+  const car=document.getElementById('carousel');let sx=0;
   car.ontouchstart=e=>{sx=e.touches[0].clientX;};
   car.ontouchend=e=>{const d=sx-e.changedTouches[0].clientX;if(Math.abs(d)>40)carMove(d>0?1:-1);};
 
   navTo('pageDetail');
 }
-
 function carMove(d){carIdx=Math.max(0,Math.min(carImgs.length-1,carIdx+d));updateCar();}
 function carGo(i){carIdx=i;updateCar();}
 function updateCar(){
   document.getElementById('carTrack').style.transform=`translateX(-${carIdx*100}%)`;
   document.getElementById('carCtr').textContent=carImgs.length>1?`${carIdx+1}/${carImgs.length}`:'';
-  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('on',i===carIdx));
+  document.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('on',j===carIdx));
 }
 
-// ════ UTILS ════
+// ── UTILS ──────────────────────────────────────────────────────────────────────
 function cleanCode(t){
-  const m=t.match(/\/([A-Za-z0-9][A-Za-z0-9\-\.]+)\.html/);
+  if(!t)return null;
+  const m=String(t).match(/\/([A-Za-z0-9][A-Za-z0-9\-\.]+)\.html/);
   if(m)return m[1];
-  return t.trim().replace(/\s+/g,'')||null;
+  const s=String(t).trim().replace(/\s+/g,'');
+  return s||null;
 }
-function cssId(c){return c.replace(/[^a-zA-Z0-9]/g,'_');}
 function fmt(v){const n=Number(v);return isNaN(n)?'—':n.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
-function saveRecent(code){
-  if(!code)return;
-  recent=[code,...recent.filter(c=>c!==code)].slice(0,12);
-  localStorage.setItem('tdo_v6',JSON.stringify(recent));
-}
+function saveRecent(c){if(!c)return;recent=[c,...recent.filter(x=>x!==c)].slice(0,12);localStorage.setItem('tdo_v7',JSON.stringify(recent));}
 function renderRecent(){
   const w=document.getElementById('recentWrap');
   if(!recent.length){w.style.display='none';return;}
   w.style.display='block';
   document.getElementById('recentChips').innerHTML=
-    recent.map(c=>`<div class="r-chip" onclick="runLookup([{primary:'${esc(c)}',fallback:''}])">${esc(c)}</div>`).join('');
+    recent.map(c=>`<div class="rchip" onclick="runLookup(['${esc(c)}'])">${esc(c)}</div>`).join('');
 }
 let toastT;
-function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');
-  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2800);
-}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),3000);}
 </script>
 </body>
 </html>
