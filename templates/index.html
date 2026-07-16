@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TDO Product Finder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+:root{--blk:#0D0D0D;--bg:#F7F5F2;--gold:#C49A3C;--gold2:#E8C96A;--red:#C0392B;--mid:#888;--bdr:#E8E4DE;--wh:#fff;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--blk);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{background:var(--blk);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.hdr-back{background:none;border:none;color:var(--gold);font-size:22px;cursor:pointer;padding:4px 8px 4px 0;display:none;align-items:center;}
+.hdr-back.on{display:flex;}
+.hdr-title{flex:1;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fff;line-height:1.4;}
+.hdr-title span{color:var(--gold);display:block;font-size:9px;letter-spacing:2px;margin-top:1px;}
+.hdr-badge{background:var(--gold);color:var(--blk);font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;display:none;}
+.hdr-badge.on{display:block;}
+.hdr-lock{background:none;border:1.5px solid #333;color:var(--mid);font-size:10px;padding:5px 10px;border-radius:4px;cursor:pointer;display:none;}
+.hdr-lock.on{display:block;}
+
+/* PAGES */
+.page{display:none;flex:1;flex-direction:column;overflow:hidden;}
+.page.on{display:flex;}
+
+/* ── SCAN NOTIFICATION (big, top) ── */
+.scan-notif{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  background:var(--gold);color:var(--blk);
+  padding:0;
+  transform:translateY(-100%);
+  transition:transform .25s ease;
+  pointer-events:none;
+}
+.scan-notif.on{transform:translateY(0);}
+.scan-notif-inner{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;
+}
+.scan-notif-icon{font-size:22px;flex-shrink:0;}
+.scan-notif-txt{flex:1;}
+.scan-notif-code{font-size:18px;font-weight:800;font-family:'SF Mono',monospace;letter-spacing:1px;}
+.scan-notif-sub{font-size:11px;opacity:.7;letter-spacing:.5px;margin-top:1px;}
+
+/* PIN */
+.pin-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;gap:20px;}
+.pin-logo{font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);}
+.pin-sub{font-size:12px;color:var(--mid);text-align:center;line-height:1.6;}
+.pin-in{width:180px;text-align:center;padding:14px;font-size:28px;letter-spacing:8px;font-family:'SF Mono',monospace;background:var(--wh);border:1.5px solid var(--bdr);border-radius:8px;outline:none;color:var(--blk);}
+.pin-in:focus{border-color:var(--gold);}
+.pin-btn{width:180px;padding:14px;background:var(--gold);color:var(--blk);border:none;border-radius:8px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;}
+.pin-err{font-size:12px;color:var(--red);min-height:18px;text-align:center;}
+
+/* HOME */
+.home-scroll{flex:1;overflow-y:auto;}
+.tabs{display:flex;background:var(--blk);padding:0 16px 14px;gap:8px;}
+.tab{flex:1;padding:10px 4px;background:#1a1a1a;border:1.5px solid #333;color:var(--mid);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:4px;cursor:pointer;transition:all .2s;text-align:center;}
+.tab.on{background:var(--gold);color:var(--blk);border-color:var(--gold);}
+.panel{display:none;}.panel.on{display:block;}
+
+/* DB STATUS */
+.db-bar{margin:14px 16px 0;padding:9px 13px;background:var(--wh);border:1px solid var(--bdr);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.db-bar-txt{font-size:11px;color:var(--mid);flex:1;}
+.db-bar-txt strong{color:var(--blk);}
+.db-bar-link{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gold);text-decoration:none;white-space:nowrap;}
+
+/* CAMERA */
+.cam-panel{background:var(--blk);}
+.cam-box{position:relative;background:#000;display:none;}
+#qr-reader{width:100%;}
+#qr-reader video{width:100%!important;display:block;}
+#qr-reader img{display:none!important;}
+#qr-reader__dashboard_section_swaplink,#qr-reader__status_span,
+#qr-reader__dashboard_section_csr,#qr-reader__header_message{display:none!important;}
+.vf-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10;}
+.vf{width:72%;max-width:290px;height:160px;position:relative;}
+.vf::before,.vf::after,.vf i::before,.vf i::after{content:'';position:absolute;width:22px;height:22px;border-color:var(--gold);border-style:solid;}
+.vf::before{top:0;left:0;border-width:3px 0 0 3px;}
+.vf::after{top:0;right:0;border-width:3px 3px 0 0;}
+.vf i::before{bottom:0;left:0;border-width:0 0 3px 3px;}
+.vf i::after{bottom:0;right:0;border-width:0 3px 3px 0;}
+.vf-lbl{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1px;color:rgba(255,255,255,.4);white-space:nowrap;text-transform:uppercase;}
+.sl{position:absolute;left:5%;right:5%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:sla 2s linear infinite;}
+@keyframes sla{0%{top:8%}50%{top:88%}100%{top:8%}}
+.cam-btns{display:flex;gap:8px;padding:12px 16px;background:var(--blk);}
+.cbtn{flex:1;padding:12px 8px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;border-radius:4px;border:none;cursor:pointer;}
+.cbtn-start{background:var(--gold);color:var(--blk);}
+.cbtn-stop{background:var(--red);color:#fff;display:none;}
+.cbtn-go{background:#1a1a1a;border:1.5px solid var(--gold);color:var(--gold);display:none;}
+.cam-queue{padding:0 16px 14px;background:var(--blk);display:none;}
+.cq-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:8px;}
+.cq-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.cq-chip{background:#1a1a1a;border:1px solid #333;border-radius:20px;padding:5px 12px;font-size:11px;font-family:'SF Mono',monospace;color:#fff;display:flex;align-items:center;gap:6px;}
+.cq-chip button{background:none;border:none;color:var(--mid);font-size:16px;cursor:pointer;line-height:1;}
+
+/* PANELS */
+.pbody{padding:16px;}
+.plbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
+.plbl2{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-top:16px;margin-bottom:7px;}
+.pinput{width:100%;padding:12px 14px;background:var(--wh);border:1.5px solid var(--bdr);border-radius:6px;font-size:16px;font-family:'SF Mono',monospace;outline:none;transition:border-color .2s;color:var(--blk);}
+.pinput:focus{border-color:var(--gold);}
+.pinput::placeholder{font-family:-apple-system,sans-serif;font-size:14px;letter-spacing:0;color:#bbb;}
+.ptxt{width:100%;min-height:100px;background:var(--wh);border:1.5px solid var(--bdr);color:var(--blk);padding:12px;font-size:14px;font-family:'SF Mono',monospace;border-radius:6px;outline:none;resize:none;line-height:1.8;transition:border-color .2s;}
+.ptxt:focus{border-color:var(--gold);}
+.phint{font-size:11px;color:var(--mid);margin-top:6px;line-height:1.6;}
+.pbtn{width:100%;margin-top:14px;padding:14px;background:var(--blk);color:#fff;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;}
+.pbtn:active,.pbtn:hover{background:#333;}
+
+/* RECENT */
+.recent{padding:16px;display:none;}
+.rlbl{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mid);margin-bottom:10px;}
+.rchips{display:flex;flex-wrap:wrap;gap:8px;}
+.rchip{background:var(--wh);border:1px solid var(--bdr);border-radius:20px;padding:6px 14px;font-size:12px;font-family:'SF Mono',monospace;cursor:pointer;color:var(--blk);}
+.rchip:active{border-color:var(--gold);color:var(--gold);}
+
+/* RESULTS */
+.res-page{background:var(--bg);}
+.res-scroll{flex:1;overflow-y:auto;padding:16px;}
+.res-grid{display:flex;flex-direction:column;gap:12px;}
+.pcard{background:var(--wh);border-radius:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);display:flex;cursor:pointer;border:1.5px solid transparent;animation:fu .3s ease;}
+.pcard:active,.pcard:hover{border-color:var(--gold);}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pthumb{width:88px;min-height:88px;background:#f5f5f5;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:26px;}
+.pthumb img{width:100%;height:100%;object-fit:cover;}
+.pinfo{flex:1;padding:11px;min-width:0;}
+.pbrand{font-size:13px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:2px;}
+.pname{font-size:10px;font-weight:600;line-height:1.3;margin-bottom:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.pprices{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;}
+.psale{font-size:15px;font-weight:800;}
+.pcurr{font-size:10px;color:var(--mid);}
+.porig{font-size:12px;color:var(--mid);text-decoration:line-through;}
+.pbadge{margin-top:4px;display:inline-block;background:var(--red);color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;padding:2px 6px;border-radius:3px;}
+.pdb{font-size:10px;color:var(--gold);margin-top:3px;}
+.pnf{font-size:12px;color:var(--mid);font-style:italic;margin-top:3px;}
+.pchev{padding:10px 8px;display:flex;align-items:center;color:#ddd;font-size:20px;flex-shrink:0;}
+.skel{background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:200% 100%;animation:sk 1.5s infinite;border-radius:4px;}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* DETAIL */
+.det-page{background:var(--wh);}
+.det-scroll{flex:1;overflow-y:auto;}
+.car{position:relative;background:#f5f5f5;overflow:hidden;}
+.car-track{display:flex;transition:transform .3s ease;}
+.car-slide{min-width:100%;min-height:280px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.car-slide img{width:100%;max-height:420px;object-fit:contain;display:block;}
+.car-arr{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);color:#fff;border:none;width:36px;height:36px;border-radius:50%;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;}
+.car-prev{left:8px;}.car-next{right:8px;}
+.car-dots{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:background .2s;}
+.dot.on{background:var(--gold);}
+.car-ctr{position:absolute;top:9px;right:10px;background:rgba(0,0,0,.5);color:#fff;font-size:11px;padding:3px 8px;border-radius:20px;}
+.disc-chip{position:absolute;top:9px;left:10px;background:var(--red);color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;padding:4px 9px;border-radius:4px;display:none;}
+
+.dinfo{padding:20px;}
+.dbrand{font-size:14px;font-weight:700;letter-spacing:1px;color:var(--gold);text-transform:uppercase;margin-bottom:5px;}
+.dname{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:12px;}
+.dprices{display:flex;align-items:baseline;gap:12px;margin-bottom:5px;flex-wrap:wrap;}
+.dsale{font-size:26px;font-weight:800;}
+.dcurr{font-size:13px;color:var(--mid);margin-left:2px;}
+.dorig{font-size:16px;color:var(--mid);text-decoration:line-through;}
+.dsavings{font-size:12px;color:var(--red);font-weight:700;margin-bottom:14px;}
+.dsku{font-size:11px;font-family:'SF Mono',monospace;color:var(--mid);padding:7px 11px;background:var(--bg);border-radius:4px;margin-bottom:14px;display:inline-block;}
+.ddb-tag{font-size:11px;color:#7b5800;margin-bottom:14px;padding:8px 11px;background:#fff8e1;border-radius:4px;border-left:3px solid var(--gold);line-height:1.5;}
+.ddesc-lbl{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
+.ddesc{font-size:14px;line-height:1.8;color:#444;margin-bottom:22px;}
+.dbtn{display:block;width:100%;background:var(--blk);color:#fff;padding:14px;text-align:center;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:6px;margin-bottom:14px;}
+.dbtn:hover{background:#333;}
+
+/* ADD PRIMARY MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.on{display:flex;}
+.modal{background:var(--wh);border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;}
+.modal-title{font-size:14px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--mid);line-height:1.6;margin-bottom:18px;}
+.modal-physical{font-family:'SF Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);background:var(--bg);padding:8px 12px;border-radius:4px;margin-bottom:16px;}
+.modal-input{width:100%;padding:12px 14px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:6px;font-size:16px;font-family:'SF Mono',monospace;outline:none;transition:border-color .2s;color:var(--blk);margin-bottom:12px;}
+.modal-input:focus{border-color:var(--gold);}
+.modal-btns{display:flex;gap:10px;}
+.modal-save{flex:1;padding:13px;background:var(--gold);color:var(--blk);border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;}
+.modal-cancel{padding:13px 18px;background:none;border:1.5px solid var(--bdr);border-radius:6px;font-size:12px;color:var(--mid);cursor:pointer;}
+
+/* NOT FOUND CARD */
+.nf-box{padding:28px 20px;text-align:center;}
+.nf-icon{font-size:38px;margin-bottom:12px;}
+.nf-title{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mid);margin-bottom:7px;}
+.nf-msg{font-size:13px;color:#888;line-height:1.6;margin-bottom:18px;}
+.nf-add{display:inline-block;padding:12px 24px;background:var(--gold);color:var(--blk);border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<!-- BIG SCAN NOTIFICATION (top banner) -->
+<div class="scan-notif" id="scanNotif">
+  <div class="scan-notif-inner">
+    <div class="scan-notif-icon">✅</div>
+    <div class="scan-notif-txt">
+      <div class="scan-notif-code" id="scanNotifCode"></div>
+      <div class="scan-notif-sub">Barcode scanned — looking up…</div>
+    </div>
+  </div>
+</div>
+
+<div class="hdr">
+  <button class="hdr-back" id="hdrBack" onclick="goBack()">←</button>
+  <div class="hdr-title">The Deal Product Details Finder<span>thedealoutlet.com</span></div>
+  <div class="hdr-badge" id="hdrBadge"></div>
+  <button class="hdr-lock" id="hdrLock" onclick="doLogout()">🔒</button>
+</div>
+
+<!-- PIN -->
+<div class="page on" id="pagePIN">
+  <div class="pin-wrap">
+    <div class="pin-logo">🏷️ TDO Finder</div>
+    <div class="pin-sub">Enter your team PIN to continue</div>
+    <input class="pin-in" id="pinInput" type="password" inputmode="numeric"
+      maxlength="8" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="pin-btn" onclick="doLogin()">Unlock</button>
+    <div class="pin-err" id="pinErr"></div>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="page" id="pageHome">
+  <div class="home-scroll">
+    <div class="tabs">
+      <button class="tab on"  onclick="switchTab('cam')">📷 Camera</button>
+      <button class="tab"     onclick="switchTab('type')">🔢 Type</button>
+      <button class="tab"     onclick="switchTab('multi')">📦 Multi</button>
+    </div>
+
+    <!-- DB STATUS BAR -->
+    <div class="db-bar" id="dbBar">
+      <div class="db-bar-txt" id="dbTxt">Loading database…</div>
+      <a href="/admin" class="db-bar-link">Admin ↗</a>
+    </div>
+
+    <!-- CAMERA -->
+    <div class="panel on cam-panel" id="panelCam">
+      <div class="cam-box" id="camBox">
+        <div id="qr-reader"></div>
+        <div class="vf-wrap">
+          <div class="vf"><i></i><div class="sl"></div>
+            <div class="vf-lbl">Point at physical barcode on product</div>
+          </div>
+        </div>
+      </div>
+      <div class="cam-btns">
+        <button class="cbtn cbtn-start" id="btnStart" onclick="startCam()">▶ Start Camera</button>
+        <button class="cbtn cbtn-stop"  id="btnStop"  onclick="stopCam()">⏹ Stop</button>
+        <button class="cbtn cbtn-go"    id="btnGo"    onclick="lookupCamQueue()">🔍 Look Up (<span id="camCount">0</span>)</button>
+      </div>
+      <div class="cam-queue" id="camQueue">
+        <div class="cq-lbl">Scanned — tap Look Up when ready</div>
+        <div class="cq-chips" id="camChips"></div>
+      </div>
+    </div>
+
+    <!-- TYPE -->
+    <div class="panel" id="panelType">
+      <div class="pbody">
+        <div class="plbl">Physical / Box Barcode</div>
+        <input class="pinput" id="typeCode" type="text"
+          placeholder="Scan or type barcode from product box"
+          onkeydown="if(event.key==='Enter')lookupTyped()">
+        <div class="phint">App looks up the primary barcode from the database automatically.</div>
+        <button class="pbtn" onclick="lookupTyped()">🔍 Find Product</button>
+      </div>
+    </div>
+
+    <!-- MULTI -->
+    <div class="panel" id="panelMulti">
+      <div class="pbody">
+        <div class="plbl">Multiple physical barcodes</div>
+        <textarea class="ptxt" id="multiText"
+          placeholder="One per line or comma-separated:&#10;1200143488867&#10;020416208650"></textarea>
+        <div class="phint">Each will be looked up via the database. Up to 50 at a time.</div>
+        <button class="pbtn" onclick="lookupMultiText()">🔍 Find All</button>
+      </div>
+    </div>
+
+    <div class="recent" id="recentWrap">
+      <div class="rlbl">Recent</div>
+      <div class="rchips" id="recentChips"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="page" id="pageResults">
+  <div class="res-scroll">
+    <div class="res-grid" id="resGrid"></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div class="page" id="pageDetail">
+  <div class="det-scroll">
+    <div class="car" id="carousel">
+      <div class="car-track" id="carTrack"></div>
+      <button class="car-arr car-prev" onclick="carMove(-1)">‹</button>
+      <button class="car-arr car-next" onclick="carMove(1)">›</button>
+      <div class="car-dots" id="carDots"></div>
+      <div class="car-ctr"  id="carCtr"></div>
+      <div class="disc-chip" id="discChip"></div>
+    </div>
+    <div id="dInfo"></div>
+  </div>
+</div>
+
+<!-- ADD PRIMARY MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-title">Add Primary Barcode</div>
+    <div class="modal-sub">
+      This physical barcode isn't in the database yet.<br>
+      Enter the primary barcode (from the TDO website URL) to link it.
+    </div>
+    <div class="modal-physical" id="modalPhysical"></div>
+    <input class="modal-input" id="modalPrimary" type="text"
+      placeholder="Primary barcode from TDO URL"
+      onkeydown="if(event.key==='Enter')saveMapping()">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save"   onclick="saveMapping()">Save & Look Up</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let products=[], carIdx=0, carImgs=[], stack=[];
+let recent=JSON.parse(localStorage.getItem('tdo_v8')||'[]');
+let camScanner=null, camOn=false, camQueue=[];
+let lastScanned='', scanCooldown=false;
+let pendingPhysical='';
+
+// ── INIT ──
+(async()=>{
+  try{
+    const r=await fetch('/auth/check').then(r=>r.json());
+    if(r.authenticated){enterApp();}
+  }catch(e){}
+})();
+
+// ── AUTH ──
+async function doLogin(){
+  const pin=document.getElementById('pinInput').value;
+  try{
+    const r=await fetch('/auth/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({pin})}).then(r=>r.json());
+    if(r.ok){document.getElementById('pinErr').textContent='';enterApp();}
+    else{document.getElementById('pinErr').textContent='Incorrect PIN';
+         document.getElementById('pinInput').value='';}
+  }catch(e){document.getElementById('pinErr').textContent='Server error';}
+}
+async function doLogout(){
+  await fetch('/auth/logout',{method:'POST'});
+  products=[];camQueue=[];stack=[];stopCam();
+  document.getElementById('hdrLock').classList.remove('on');
+  document.getElementById('pinInput').value='';
+  showPage('pagePIN');
+}
+function enterApp(){
+  document.getElementById('hdrLock').classList.add('on');
+  renderRecent();loadDbStats();showPage('pageHome');
+}
+
+// ── NAV ──
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  const isRoot=id==='pageHome'||id==='pagePIN';
+  document.getElementById('hdrBack').classList.toggle('on',!isRoot);
+  const b=document.getElementById('hdrBadge');
+  b.classList.toggle('on',id==='pageResults'&&products.length>1);
+  if(id==='pageResults')b.textContent=products.length+' items';
+}
+function goBack(){
+  if(stack.length)stack.pop();
+  showPage(stack[stack.length-1]||'pageHome');
+}
+function navTo(id){stack.push(id);showPage(id);}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',['cam','type','multi'][i]===t));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.getElementById({cam:'panelCam',type:'panelType',multi:'panelMulti'}[t]).classList.add('on');
+  if(t!=='cam'&&camOn)stopCam();
+}
+
+// ── DB STATS ──
+async function loadDbStats(){
+  try{
+    const d=await fetch('/db-stats').then(r=>r.json());
+    const txt=document.getElementById('dbTxt');
+    if(d.total>0)
+      txt.innerHTML=`DB: <strong>${d.total.toLocaleString()}</strong> barcodes · <strong>${d.mapped.toLocaleString()}</strong> mapped pairs`;
+    else
+      txt.innerHTML=`<span style="color:var(--red)">Database empty</span> — go to Admin to import Excel`;
+  }catch(e){}
+}
+
+// ── SCAN NOTIFICATION (big top banner) ──
+let notifTimer;
+function showScanNotif(code){
+  document.getElementById('scanNotifCode').textContent=code;
+  const n=document.getElementById('scanNotif');
+  n.classList.add('on');
+  clearTimeout(notifTimer);
+  notifTimer=setTimeout(()=>n.classList.remove('on'),2500);
+}
+
+// ── CAMERA ──
+function startCam(){
+  document.getElementById('camBox').style.display='block';
+  document.getElementById('btnStart').style.display='none';
+  document.getElementById('btnStop').style.display='flex';
+  camScanner=new Html5Qrcode("qr-reader");
+  camScanner.start(
+    {facingMode:"environment"},
+    {fps:10, qrbox:{width:260,height:150}, aspectRatio:1.5},
+    decoded=>{
+      const code=cleanCode(decoded);
+      if(!code)return;
+      // Debounce: ignore same code within 3 seconds
+      if(code===lastScanned&&scanCooldown)return;
+      lastScanned=code;scanCooldown=true;
+      setTimeout(()=>{scanCooldown=false;},3000);
+      if(camQueue.includes(code)){showScanNotif(code+' (already added)');return;}
+      camQueue.push(code);
+      renderCamQueue();
+      showScanNotif(code);
+    },()=>{}
+  ).then(()=>{camOn=true;}).catch(()=>{showScanNotif('Camera denied — use HTTPS');stopCam();});
+}
+function stopCam(){
+  if(camScanner){camScanner.stop().catch(()=>{});camScanner=null;}
+  camOn=false;
+  document.getElementById('camBox').style.display='none';
+  document.getElementById('btnStart').style.display='flex';
+  document.getElementById('btnStop').style.display='none';
+}
+function renderCamQueue(){
+  const wrap=document.getElementById('camQueue');
+  const go=document.getElementById('btnGo');
+  document.getElementById('camCount').textContent=camQueue.length;
+  if(!camQueue.length){wrap.style.display='none';go.style.display='none';return;}
+  wrap.style.display='block';go.style.display='flex';
+  document.getElementById('camChips').innerHTML=camQueue.map((c,i)=>`
+    <div class="cq-chip"><span>${esc(c)}</span>
+    <button onclick="camQueue.splice(${i},1);renderCamQueue()">×</button></div>`).join('');
+}
+function lookupCamQueue(){
+  if(!camQueue.length)return;
+  const codes=[...camQueue];camQueue=[];renderCamQueue();stopCam();
+  runLookup(codes);
+}
+
+// ── TYPE & MULTI ──
+function lookupTyped(){
+  const code=document.getElementById('typeCode').value.trim();
+  if(!code)return;
+  runLookup([cleanCode(code)||code]);
+}
+function lookupMultiText(){
+  const codes=[...new Set(
+    document.getElementById('multiText').value
+      .split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).map(s=>cleanCode(s)||s)
+  )];
+  if(!codes.length)return;
+  runLookup(codes);
+}
+
+// ── CORE LOOKUP ──
+async function runLookup(codes){
+  products=[];stack=[];
+  navTo('pageResults');
+  document.getElementById('resGrid').innerHTML=codes.map((c,i)=>`
+    <div class="pcard" id="pc${i}" style="pointer-events:none">
+      <div class="pthumb skel" style="min-height:88px"></div>
+      <div class="pinfo">
+        <div class="skel" style="height:9px;width:50%;margin-bottom:8px"></div>
+        <div class="skel" style="height:13px;margin-bottom:8px"></div>
+        <div class="skel" style="height:15px;width:38%"></div>
+      </div>
+    </div>`).join('');
+
+  for(let i=0;i<codes.length;i+=8){
+    const batch=codes.slice(i,i+8);
+    try{
+      const r=await fetch('/lookup',{method:'POST',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify({codes:batch})});
+      if(r.status===401){doLogout();return;}
+      const d=await r.json();
+      if(d.error)return;
+      d.results.forEach((p,j)=>{products.push(p);renderCard(p,i+j);});
+    }catch(e){
+      batch.forEach((c,j)=>{
+        const p={found:false,code:c,error:'Server error'};
+        products.push(p);renderCard(p,i+j);
+      });
+    }
+  }
+  codes.forEach(c=>{if(c)saveRecent(c);});renderRecent();
+  if(products.length===1)openDetail(0);
+}
+
+function renderCard(p,i){
+  const el=document.getElementById('pc'+i);if(!el)return;
+  const hasD=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
+  const thumb=p.images&&p.images.length
+    ?`<img src="${esc(p.images[0])}" onerror="this.parentNode.innerHTML='📦'" alt="">`:'📦';
+  el.outerHTML=p.found?`
+    <div class="pcard" onclick="openDetail(${i})">
+      <div class="pthumb">${thumb}</div>
+      <div class="pinfo">
+        <div class="pbrand">${esc(p.brand||'THE DEAL OUTLET')}</div>
+        <div class="pname">${esc(p.name||p.code)}</div>
+        <div class="pprices">
+          <span class="psale">${fmt(p.salePrice)}<span class="pcurr"> AED</span></span>
+          ${hasD?`<span class="porig">${fmt(p.originalPrice)} AED</span>`:''}
+        </div>
+        ${hasD?`<div class="pbadge">-${p.discount}% OFF</div>`:''}
+        ${p.used_db?`<div class="pdb">⚡ via barcode map</div>`:''}
+      </div><div class="pchev">›</div>
+    </div>`:`
+    <div class="pcard" onclick="openDetail(${i})">
+      <div class="pthumb">🔍</div>
+      <div class="pinfo">
+        <div class="pbrand" style="color:var(--red)">NOT FOUND</div>
+        <div class="pname">${esc(p.code||'?')}</div>
+        <div class="pnf">${esc(p.error||'Not found')}</div>
+        ${p.needs_primary?`<div style="font-size:11px;color:var(--gold);margin-top:4px">Tap to add primary barcode →</div>`:''}
+      </div><div class="pchev">›</div>
+    </div>`;
+}
+
+// ── DETAIL ──
+function openDetail(i){
+  const p=products[i];if(!p)return;
+  carIdx=0;carImgs=p.images||[];
+
+  document.getElementById('carTrack').innerHTML=
+    carImgs.map(u=>`<div class="car-slide"><img src="${esc(u)}"
+      onerror="this.closest('.car-slide').style.display='none'" alt=""></div>`).join('');
+  document.getElementById('carDots').innerHTML=
+    carImgs.length>1?carImgs.map((_,j)=>`<div class="dot${j===0?' on':''}" onclick="carGo(${j})"></div>`).join(''):'';
+  document.querySelector('.car-prev').style.display=carImgs.length>1?'flex':'none';
+  document.querySelector('.car-next').style.display=carImgs.length>1?'flex':'none';
+  updateCar();
+
+  const hasD=p.found&&p.originalPrice&&p.originalPrice>p.salePrice;
+  const dc=document.getElementById('discChip');
+  if(hasD&&p.discount){dc.style.display='block';dc.textContent=`-${p.discount}%`;}
+  else dc.style.display='none';
+
+  const info=document.getElementById('dInfo');
+  if(!p.found){
+    info.innerHTML=`<div class="nf-box">
+      <div class="nf-icon">🔍</div>
+      <div class="nf-title">Product Not Found</div>
+      <div class="nf-msg">${esc(p.error||'Not found on thedealoutlet.com')}</div>
+      ${p.needs_primary
+        ?`<button class="nf-add" onclick="openModal('${esc(p.code)}')">
+            + Add Primary Barcode to Database
+          </button><br>`
+        :''}
+      ${p.productUrl?`<a href="${esc(p.productUrl)}" target="_blank" class="dbtn" style="margin-top:8px">Try on Website ↗</a>`:''}
+    </div>`;
+  }else{
+    const sav=hasD?(p.originalPrice-p.salePrice).toFixed(2):0;
+    const desc=p.description?p.description.replace(/\s*\.\.\s*/g,'<br>• ').replace(/^/,'• '):'';
+    info.innerHTML=`<div class="dinfo">
+      <div class="dbrand">${esc(p.brand||'THE DEAL OUTLET')}</div>
+      <div class="dname">${esc(p.name||p.code)}</div>
+      <div class="dprices">
+        <span class="dsale">${fmt(p.salePrice)}<span class="dcurr"> AED</span></span>
+        ${hasD?`<span class="dorig">${fmt(p.originalPrice)} AED</span>`:''}
+      </div>
+      ${hasD?`<div class="dsavings">You save ${fmt(sav)} AED · ${p.discount}% off</div>`:''}
+      <div class="dsku">SKU: ${esc(p.code)}</div>
+      ${p.used_db?`<div class="ddb-tag">
+        ⚡ Physical barcode <strong>${esc(p.physical_code||'')}</strong>
+        → Primary <strong>${esc(p.primary_code||p.code)}</strong> (from database)
+      </div>`:''}
+      ${desc?`<div class="ddesc-lbl">Description</div><div class="ddesc">${desc}</div>`:''}
+      <a href="${esc(p.productUrl||'')}" target="_blank" class="dbtn">Open on TDO Website ↗</a>
+    </div>`;
+  }
+
+  const car=document.getElementById('carousel');let sx=0;
+  car.ontouchstart=e=>{sx=e.touches[0].clientX;};
+  car.ontouchend=e=>{const d=sx-e.changedTouches[0].clientX;if(Math.abs(d)>40)carMove(d>0?1:-1);};
+  navTo('pageDetail');
+}
+
+function carMove(d){carIdx=Math.max(0,Math.min(carImgs.length-1,carIdx+d));updateCar();}
+function carGo(i){carIdx=i;updateCar();}
+function updateCar(){
+  document.getElementById('carTrack').style.transform=`translateX(-${carIdx*100}%)`;
+  document.getElementById('carCtr').textContent=carImgs.length>1?`${carIdx+1}/${carImgs.length}`:'';
+  document.querySelectorAll('.dot').forEach((d,j)=>d.classList.toggle('on',j===carIdx));
+}
+
+// ── ADD PRIMARY MODAL ──
+function openModal(physical){
+  pendingPhysical=physical;
+  document.getElementById('modalPhysical').textContent='Physical: '+physical;
+  document.getElementById('modalPrimary').value='';
+  document.getElementById('modalBg').classList.add('on');
+  setTimeout(()=>document.getElementById('modalPrimary').focus(),100);
+}
+function closeModal(){document.getElementById('modalBg').classList.remove('on');}
+
+async function saveMapping(){
+  const primary=document.getElementById('modalPrimary').value.trim();
+  if(!primary)return;
+  closeModal();
+
+  try{
+    const r=await fetch('/add-mapping',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({physical:pendingPhysical,primary})
+    }).then(r=>r.json());
+
+    if(r.ok&&r.result){
+      // Replace the not-found product in results with the newly found one
+      const idx=products.findIndex(p=>p.code===pendingPhysical||p.physical_code===pendingPhysical);
+      if(idx>=0){products[idx]=r.result;renderCard(r.result,idx);}
+      else{products.push(r.result);}
+      loadDbStats();
+      if(r.result.found)openDetail(products.length-1);
+    }
+  }catch(e){alert('Failed to save mapping');}
+}
+
+// Close modal on background tap
+document.getElementById('modalBg').addEventListener('click',function(e){
+  if(e.target===this)closeModal();
+});
+
+// ── UTILS ──
+function cleanCode(t){
+  if(!t)return null;
+  const m=String(t).match(/\/([A-Za-z0-9][A-Za-z0-9\-\.]+)\.html/);
+  if(m)return m[1];
+  return String(t).trim().replace(/\s+/g,'')||null;
+}
+function fmt(v){const n=Number(v);return isNaN(n)?'—':n.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function saveRecent(c){recent=[c,...recent.filter(x=>x!==c)].slice(0,12);localStorage.setItem('tdo_v8',JSON.stringify(recent));}
+function renderRecent(){
+  const w=document.getElementById('recentWrap');
+  if(!recent.length){w.style.display='none';return;}
+  w.style.display='block';
+  document.getElementById('recentChips').innerHTML=
+    recent.map(c=>`<div class="rchip" onclick="runLookup(['${esc(c)}'])">${esc(c)}</div>`).join('');
+}
+</script>
+</body>
+</html>

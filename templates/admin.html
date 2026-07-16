@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDO Finder — Admin</title>
+<style>
+:root{--blk:#0D0D0D;--bg:#F7F5F2;--gold:#C49A3C;--red:#C0392B;--mid:#888;--bdr:#E8E4DE;--wh:#fff;--green:#2e7d32;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--blk);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+.hdr{background:var(--blk);padding:14px 20px;display:flex;align-items:center;gap:12px;}
+.hdr-title{flex:1;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#fff;}
+.hdr-title span{color:var(--gold);}
+.hdr-back{color:var(--gold);text-decoration:none;font-size:13px;font-weight:700;letter-spacing:1px;}
+.body{max-width:640px;margin:0 auto;padding:24px 20px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:28px;}
+.stat{background:var(--wh);border-radius:10px;padding:16px;text-align:center;border:1px solid var(--bdr);}
+.stat-num{font-size:28px;font-weight:800;color:var(--gold);display:block;margin-bottom:4px;}
+.stat-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid);}
+
+/* SECTION */
+.section{background:var(--wh);border-radius:10px;border:1px solid var(--bdr);margin-bottom:20px;overflow:hidden;}
+.section-hdr{padding:16px 18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;}
+.section-icon{font-size:20px;}
+.section-title{font-size:13px;font-weight:700;}
+.section-sub{font-size:11px;color:var(--mid);margin-top:2px;}
+.section-body{padding:18px;}
+
+/* UPLOAD DROP */
+.drop{border:2px dashed var(--bdr);border-radius:8px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;}
+.drop:hover,.drop.drag{border-color:var(--gold);background:#fffbf2;}
+.drop input{display:none;}
+.drop-icon{font-size:32px;margin-bottom:10px;}
+.drop-txt{font-size:13px;color:var(--mid);line-height:1.7;}
+.drop-txt strong{color:var(--blk);display:block;margin-bottom:4px;font-size:14px;}
+
+/* TABLE FORMAT */
+.fmt-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:12px;}
+.fmt-table th{background:var(--bg);padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid);border-bottom:1px solid var(--bdr);}
+.fmt-table td{padding:9px 12px;border-bottom:1px solid var(--bdr);}
+.fmt-table tr:last-child td{border-bottom:none;}
+.col-a{background:#f0faf0;font-family:'SF Mono',monospace;font-weight:700;}
+.col-b{font-family:'SF Mono',monospace;}
+
+/* PROGRESS */
+.progress-wrap{display:none;margin-top:14px;}
+.progress-wrap.on{display:block;}
+.progress-bar-bg{background:var(--bg);border-radius:20px;height:8px;overflow:hidden;margin-bottom:8px;}
+.progress-bar{background:var(--gold);height:100%;border-radius:20px;width:0%;transition:width .3s;}
+.progress-txt{font-size:12px;color:var(--mid);}
+
+/* RESULT BOX */
+.result-box{margin-top:14px;padding:14px 16px;border-radius:8px;font-size:13px;display:none;}
+.result-box.on{display:block;}
+.result-box.ok{background:#f0faf0;border:1px solid #a5d6a7;color:var(--green);}
+.result-box.err{background:#fff0f0;border:1px solid #ffcdd2;color:var(--red);}
+.result-box strong{display:block;font-size:14px;margin-bottom:4px;}
+
+/* SEARCH */
+.search-row{display:flex;gap:8px;margin-bottom:14px;}
+.search-in{flex:1;padding:10px 14px;background:var(--bg);border:1.5px solid var(--bdr);border-radius:6px;font-size:14px;font-family:'SF Mono',monospace;outline:none;transition:border-color .2s;}
+.search-in:focus{border-color:var(--gold);}
+.search-btn{padding:10px 18px;background:var(--blk);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.search-result{font-size:13px;padding:12px 14px;background:var(--bg);border-radius:6px;display:none;}
+.search-result.on{display:block;}
+
+/* DANGER */
+.danger-btn{width:100%;padding:12px;background:none;border:1.5px solid var(--red);color:var(--red);border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.danger-btn:hover{background:var(--red);color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">TDO Finder <span>— Admin</span></div>
+  <a href="/" class="hdr-back">← Back to App</a>
+</div>
+
+<div class="body">
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><span class="stat-num" id="statTotal">—</span><span class="stat-lbl">Total Barcodes</span></div>
+    <div class="stat"><span class="stat-num" id="statMapped">—</span><span class="stat-lbl">Mapped Pairs</span></div>
+    <div class="stat"><span class="stat-num" id="statPrimary">—</span><span class="stat-lbl">Primary Codes</span></div>
+  </div>
+
+  <!-- IMPORT EXCEL -->
+  <div class="section">
+    <div class="section-hdr">
+      <div class="section-icon">📊</div>
+      <div>
+        <div class="section-title">Import Excel / CSV</div>
+        <div class="section-sub">Bulk load barcode mappings. Safe to re-import — duplicates are updated.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="drop" id="drop" onclick="document.getElementById('xlFile').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" onchange="importFile(this.files[0])">
+        <div class="drop-icon">📂</div>
+        <div class="drop-txt">
+          <strong>Tap to choose file — any filename accepted</strong>
+          .xlsx · .xls · .csv &nbsp;·&nbsp; Up to 100,000+ rows
+        </div>
+      </div>
+
+      <table class="fmt-table">
+        <tr><th>Column A</th><th>Column B</th></tr>
+        <tr><td><strong>Primary Barcode</strong><br><span style="color:var(--mid);font-size:11px">TDO website URL barcode</span></td>
+            <td><strong>Physical Barcode</strong><br><span style="color:var(--mid);font-size:11px">Printed on product box/label</span></td></tr>
+        <tr><td class="col-a">094927821677</td><td class="col-b">1200143488867</td></tr>
+        <tr><td class="col-a">104227337532</td><td class="col-b">020416208650</td></tr>
+        <tr><td class="col-a">104227337533</td><td class="col-b"></td></tr>
+      </table>
+      <div style="font-size:11px;color:var(--mid);margin-top:8px;">Row 1 = header (skipped). Column B is optional — leave blank if physical = primary.</div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-txt" id="progressTxt">Uploading…</div>
+      </div>
+      <div class="result-box" id="importResult"></div>
+    </div>
+  </div>
+
+  <!-- BARCODE LOOKUP TEST -->
+  <div class="section">
+    <div class="section-hdr">
+      <div class="section-icon">🔍</div>
+      <div>
+        <div class="section-title">Test Barcode Lookup</div>
+        <div class="section-sub">Check what the database returns for any barcode.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="search-row">
+        <input class="search-in" id="testCode" placeholder="Enter any barcode…"
+          onkeydown="if(event.key==='Enter')testLookup()">
+        <button class="search-btn" onclick="testLookup()">Test</button>
+      </div>
+      <div class="search-result" id="testResult"></div>
+    </div>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div class="section">
+    <div class="section-hdr">
+      <div class="section-icon">⚠️</div>
+      <div>
+        <div class="section-title">Danger Zone</div>
+        <div class="section-sub">Irreversible actions — use with caution.</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <button class="danger-btn" onclick="clearDb()">🗑 Clear Entire Database</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+loadStats();
+
+async function loadStats(){
+  try{
+    const d=await fetch('/db-stats').then(r=>r.json());
+    document.getElementById('statTotal').textContent=d.total.toLocaleString();
+    document.getElementById('statMapped').textContent=d.mapped.toLocaleString();
+    // Primary = total - mapped (mapped are physical-only entries)
+    document.getElementById('statPrimary').textContent=(d.total-d.mapped).toLocaleString();
+  }catch(e){}
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('drop').classList.remove('drag');
+  importFile(e.dataTransfer.files[0]);
+}
+
+async function importFile(file){
+  if(!file)return;
+  const pw=document.getElementById('progressWrap');
+  const pb=document.getElementById('progressBar');
+  const pt=document.getElementById('progressTxt');
+  const rb=document.getElementById('importResult');
+  rb.className='result-box'; rb.style.display='none';
+  pw.classList.add('on'); pb.style.width='0%';
+  pt.textContent='Uploading '+file.name+' ('+Math.round(file.size/1024)+'KB)…';
+
+  // Animate bar while waiting
+  let pct=0;
+  const anim=setInterval(()=>{pct=Math.min(pct+2,85);pb.style.width=pct+'%';},200);
+
+  const fd=new FormData(); fd.append('file',file);
+  try{
+    const d=await fetch('/import-excel',{method:'POST',body:fd}).then(r=>r.json());
+    clearInterval(anim); pb.style.width='100%';
+    pt.textContent='Done.';
+
+    if(d.error){
+      rb.className='result-box err on';
+      rb.innerHTML=`<strong>Import failed</strong>${d.error}`;
+    }else{
+      rb.className='result-box ok on';
+      rb.innerHTML=`<strong>✅ Import successful</strong>
+        ${d.imported.toLocaleString()} rows imported · 
+        Database now has <strong>${d.db_total.toLocaleString()}</strong> barcodes
+        (${d.db_mapped.toLocaleString()} mapped pairs)`;
+      loadStats();
+    }
+  }catch(e){
+    clearInterval(anim);
+    rb.className='result-box err on';
+    rb.innerHTML=`<strong>Upload failed</strong>Check the server is running.`;
+  }
+  document.getElementById('xlFile').value='';
+}
+
+async function testLookup(){
+  const code=document.getElementById('testCode').value.trim();
+  if(!code)return;
+  const el=document.getElementById('testResult');
+  el.className='search-result on';
+  el.textContent='Looking up…';
+  try{
+    const d=await fetch('/map-debug',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({code})}).then(r=>r.json());
+    if(d.in_map){
+      el.innerHTML=`<span style="color:var(--green)">✅ Found in database</span><br>
+        Physical: <strong>${d.scanned}</strong><br>
+        Primary (website barcode): <strong>${d.primary}</strong><br>
+        <small style="color:var(--mid)">DB size: ${d.map_size.toLocaleString()} entries</small>`;
+    }else{
+      el.innerHTML=`<span style="color:var(--red)">❌ Not in database</span><br>
+        Barcode <strong>${d.scanned}</strong> has no mapping.<br>
+        <small style="color:var(--mid)">DB size: ${d.map_size.toLocaleString()} entries</small>`;
+    }
+  }catch(e){el.textContent='Error — check server';}
+}
+
+async function clearDb(){
+  if(!confirm('Delete ALL barcodes from the database? This cannot be undone.'))return;
+  try{
+    const d=await fetch('/db-clear',{method:'POST'}).then(r=>r.json());
+    if(d.ok){alert('Database cleared.');loadStats();}
+  }catch(e){alert('Failed.');}
+}
+</script>
+</body>
+</html>
